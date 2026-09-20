@@ -24,6 +24,9 @@ class Universe:
     def symbols(self) -> list[str]:
         return list(self._by_symbol)
 
+    def get(self, symbol: str) -> Instrument | None:
+        return self._by_symbol.get(symbol)
+
 
 def load_universe(path: Path = DEFAULT_UNIVERSE_PATH) -> Universe:
     data = yaml.safe_load(path.read_text())
