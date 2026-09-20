@@ -1,14 +1,15 @@
 name: SPDR source canary
 
 # State Street publishes the NAV history sheets this project parses. Nothing
-# warns us if they move the URL or reshape the file, so this checks daily.
+# warns us if they move the URL or reshape the file, so this checks weekly.
 # It downloads and parses only — no data is stored or committed, because the
 # repository is public and the sheets are State Street's to distribute.
 
 on:
   schedule:
-    # 12:00 UTC Tue-Sat: after each US session's file is published.
-    - cron: "0 12 * * 2-6"
+    # 12:00 UTC Wednesday. Mid-week avoids Monday market holidays, so there is
+    # always a recent session to check against.
+    - cron: "0 12 * * 3"
   workflow_dispatch:
 
 jobs:

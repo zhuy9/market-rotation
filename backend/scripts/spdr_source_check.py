@@ -17,8 +17,10 @@ from app.providers.spdr_flows import fetch_flows
 # parsed but produced nothing usable, which is a format change in disguise.
 MIN_ROWS = 100
 
-# Published every business day, so a gap this long is a stalled feed, not a holiday.
-MAX_STALENESS = timedelta(days=7)
+# The sheets already lag the session by a couple of days, and the canary only
+# runs weekly, so a 7-day window would false-alarm over a holiday week. A feed
+# that has genuinely stopped keeps aging past this on every later run.
+MAX_STALENESS = timedelta(days=10)
 
 
 def main() -> int:
