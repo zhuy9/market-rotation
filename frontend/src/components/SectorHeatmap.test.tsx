@@ -45,12 +45,48 @@ describe('SectorHeatmap', () => {
   it('reverses order when the same column header is clicked again', () => {
     render(<SectorHeatmap sectors={SECTORS} />)
 
-    // Columns: Ticker, Sector, 1D, 5D, 20D, vs SPY 5D, vs SPY 20D
-    fireEvent.click(screen.getAllByRole('columnheader')[3])
+    fireEvent.click(screen.getByRole('button', { name: /^5D/ }))
 
     const rows = screen.getAllByRole('row').slice(1)
     const firstCellText = rows[0].querySelector('td')?.textContent
     expect(firstCellText).toBe('XLE') // lowest 5D return (-3%) after reversing
+  })
+
+  it('exposes sortable columns as keyboard-operable buttons', () => {
+    render(<SectorHeatmap sectors={SECTORS} />)
+
+    // Every numeric column sorts, so every one needs to be reachable by keyboard.
+    expect(screen.getAllByRole('button')).toHaveLength(5)
+  })
+
+  it('reports the active sort column and direction to assistive tech', () => {
+    render(<SectorHeatmap sectors={SECTORS} />)
+
+    const sorted = screen.getAllByRole('columnheader').find((h) => h.textContent?.startsWith('5D'))
+    expect(sorted).toHaveAttribute('aria-sort', 'descending')
+
+    fireEvent.click(screen.getByRole('button', { name: /^5D/ }))
+    expect(sorted).toHaveAttribute('aria-sort', 'ascending')
+  })
+
+  it('sorts sectors with missing data to the bottom in either direction', () => {
+    const withGap = [
+      makeSector({ symbol: 'XLK', return_5d: 0.02 }),
+      makeSector({ symbol: 'XLRE', return_5d: null }),
+      makeSector({ symbol: 'XLE', return_5d: -0.03 }),
+    ]
+    render(<SectorHeatmap sectors={withGap} />)
+
+    const tickers = () =>
+      screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((r) => r.querySelector('td')?.textContent)
+
+    expect(tickers()).toEqual(['XLK', 'XLE', 'XLRE'])
+
+    fireEvent.click(screen.getByRole('button', { name: /^5D/ }))
+    expect(tickers()).toEqual(['XLE', 'XLK', 'XLRE'])
   })
 
   it('shows missing data as n/a instead of crashing', () => {

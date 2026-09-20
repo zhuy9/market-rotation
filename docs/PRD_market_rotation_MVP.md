@@ -1238,7 +1238,6 @@ market-rotation-dashboard/
 │
 ├── README.md
 ├── LICENSE
-├── CONTRIBUTING.md
 ├── SECURITY.md
 ├── .gitignore
 ├── .env.example
@@ -1584,7 +1583,6 @@ Complete:
 README.md
 docs/architecture.md
 docs/data-methodology.md
-CONTRIBUTING.md
 SECURITY.md
 LICENSE
 ```

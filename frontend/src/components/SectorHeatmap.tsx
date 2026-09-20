@@ -45,18 +45,34 @@ export function SectorHeatmap({ sectors }: SectorHeatmapProps) {
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-neutral-800 text-xs tracking-wide text-neutral-500 uppercase">
-            <th className="py-1.5 text-left">Ticker</th>
-            <th className="py-1.5 text-left">Sector</th>
-            {COLUMNS.map((column) => (
-              <th
-                key={column.key}
-                className="cursor-pointer py-1.5 text-right select-none"
-                onClick={() => toggleSort(column.key)}
-              >
-                {column.label}
-                {sortKey === column.key ? (ascending ? ' ↑' : ' ↓') : ''}
-              </th>
-            ))}
+            <th scope="col" className="py-1.5 text-left">
+              Ticker
+            </th>
+            <th scope="col" className="py-1.5 text-left">
+              Sector
+            </th>
+            {COLUMNS.map((column) => {
+              const isSorted = sortKey === column.key
+              return (
+                <th
+                  key={column.key}
+                  scope="col"
+                  aria-sort={isSorted ? (ascending ? 'ascending' : 'descending') : 'none'}
+                  className="py-1.5 text-right"
+                >
+                  {/* A button, not a click handler on the th, so the column is
+                      reachable and operable by keyboard. */}
+                  <button
+                    type="button"
+                    onClick={() => toggleSort(column.key)}
+                    className="w-full cursor-pointer text-right uppercase transition select-none hover:text-neutral-200 focus-visible:rounded-xs focus-visible:outline focus-visible:outline-neutral-500"
+                  >
+                    {column.label}
+                    {isSorted ? (ascending ? ' ↑' : ' ↓') : ''}
+                  </button>
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody>

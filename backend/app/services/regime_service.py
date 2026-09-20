@@ -30,6 +30,7 @@ class RegimeMetrics:
     spy_return_5d: float | None
     sector_positive_count_5d: int
     sector_negative_count_5d: int
+    sector_total: int  # how many sectors the universe config defines, not how many had data
     sector_dispersion_5d: float | None
     rsp_vs_spy_5d: float | None
     hyg_vs_lqd_5d: float | None
@@ -106,7 +107,7 @@ def _check_broad_risk_off(m: RegimeMetrics, cfg: dict) -> RegimeResult | None:
     confidence = "high" if len(confirmations) >= 3 else "medium"
     reasons = [
         f"SPY fell {_pct(m.spy_return_5d)} over five sessions.",
-        f"Only {m.sector_positive_count_5d} of 11 sectors were positive.",
+        f"Only {m.sector_positive_count_5d} of {m.sector_total} sectors were positive.",
         *confirmations,
     ]
     return RegimeResult(regime="BROAD_RISK_OFF", confidence=confidence, reasons=reasons)
@@ -144,7 +145,7 @@ def _check_broad_risk_on(m: RegimeMetrics, cfg: dict) -> RegimeResult | None:
     confidence = "high" if m.sector_positive_count_5d >= 9 else "medium"
     reasons = [
         f"SPY gained {_pct(m.spy_return_5d)} over five sessions.",
-        f"{m.sector_positive_count_5d} of 11 sectors were positive.",
+        f"{m.sector_positive_count_5d} of {m.sector_total} sectors were positive.",
         "Equal-weight S&P outperformed SPY.",
         "High-yield credit outperformed investment-grade credit.",
     ]
@@ -176,7 +177,7 @@ def _check_internal_rotation(m: RegimeMetrics, cfg: dict) -> RegimeResult | None
 def _mixed_result(m: RegimeMetrics) -> RegimeResult:
     reasons = [
         f"SPY returned {_pct(m.spy_return_5d)} over five sessions.",
-        f"{m.sector_positive_count_5d} of 11 sectors were positive, "
+        f"{m.sector_positive_count_5d} of {m.sector_total} sectors were positive, "
         f"{m.sector_negative_count_5d} were negative.",
         f"Sector return dispersion was {_pct(m.sector_dispersion_5d)}.",
     ]

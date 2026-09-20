@@ -73,6 +73,7 @@ def test_missing_benchmark_data_does_not_crash_and_fails_the_condition():
         spy_return_5d=0.015,
         sector_positive_count_5d=8,
         sector_negative_count_5d=3,
+        sector_total=11,
         sector_dispersion_5d=0.01,
         rsp_vs_spy_5d=None,  # RSP data missing
         hyg_vs_lqd_5d=0.0,
@@ -99,6 +100,7 @@ def test_all_none_metrics_produce_mixed_without_raising():
         spy_return_5d=None,
         sector_positive_count_5d=0,
         sector_negative_count_5d=0,
+        sector_total=11,
         sector_dispersion_5d=None,
         rsp_vs_spy_5d=None,
         hyg_vs_lqd_5d=None,
@@ -124,3 +126,31 @@ def test_load_regime_config_reads_shipped_thresholds():
 
     assert config["broad_risk_on"]["spy_5d_min"] == pytest.approx(0.01)
     assert config["internal_rotation"]["dispersion_5d_min"] == pytest.approx(0.02)
+
+
+def test_reasons_report_the_configured_sector_count_not_a_hardcoded_eleven():
+    """The sector total comes from the universe config, so a universe with a
+    different number of sectors reports that number instead of always "11"."""
+    metrics = RegimeMetrics(
+        spy_return_5d=-0.03,
+        sector_positive_count_5d=1,
+        sector_negative_count_5d=5,
+        sector_total=6,
+        sector_dispersion_5d=0.01,
+        rsp_vs_spy_5d=-0.01,
+        hyg_vs_lqd_5d=-0.02,
+        defensive_spread_5d=0.0,
+        defensive_outperform_count=0,
+        qqq_vs_spy_5d=-0.01,
+        iwm_vs_spy_5d=-0.01,
+        gld_vs_spy_5d=0.02,
+        ief_vs_spy_5d=0.02,
+        tlt_vs_spy_5d=0.02,
+        vix_return_5d=0.1,
+    )
+
+    result = classify_regime(metrics)
+
+    assert result.regime == "BROAD_RISK_OFF"
+    assert any("1 of 6 sectors were positive" in reason for reason in result.reasons)
+    assert not any("of 11" in reason for reason in result.reasons)

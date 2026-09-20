@@ -20,6 +20,31 @@ is on this page.
   `STALE DATA` rather than silently presenting it as current.
 - A symbol with zero cached rows produces a `"<SYMBOL> data is
   unavailable."` warning instead of breaking the page.
+- The API exposes `data_timestamp` (the newest bar), `retrieved_at` (when a
+  provider last wrote to the cache) and `provider` so freshness can be judged
+  independently of the UI. The dashboard shows the bar as a date only —
+  daily bars are stamped at midnight, so a clock time would be precision the
+  data does not have — and shows `retrieved_at` as a real timestamp.
+
+## Refresh behavior
+
+- **On startup** the backend tops the cache up, but only when it is empty or
+  older than the staleness window above. That keeps a fresh clone useful on
+  first load without re-downloading on every `--reload` restart. A provider
+  outage at startup is logged and the API still starts, serving whatever is
+  already cached.
+- **Incremental fetch.** A refresh requests only the sessions missing since
+  the oldest cached symbol, plus five days of overlap so late corrections and
+  split adjustments land. Writes are `INSERT OR REPLACE`, so the overlap never
+  duplicates rows. While any configured symbol has no cached data at all, the
+  full ~400-day window is requested instead, so a newly added ticker still
+  gets real history.
+- **Manual refresh** (`POST /api/data/refresh`, the *Refresh Data* button) is
+  limited to one call per 60 seconds. A call inside that window returns
+  `status: "cooldown"` without touching the provider.
+- A refresh reports `success`, `partial`, `failed` or `cooldown`. A partial
+  provider failure keeps every symbol that did return data, and the failed
+  symbols are listed in the response.
 
 ## Returns
 
@@ -53,7 +78,10 @@ breadth_ratio  = positive_count / total
 ```
 
 Missing sectors are excluded from both the numerator and denominator
-(never silently counted as negative).
+(never silently counted as negative). The regime engine's written reasons
+report the count against the number of sectors defined in
+`app/config/universe.yaml`, so adding or removing a sector there changes the
+wording automatically rather than asserting a hardcoded 11.
 
 ## Sector dispersion
 

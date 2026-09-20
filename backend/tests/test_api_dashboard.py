@@ -61,6 +61,22 @@ def test_dashboard_endpoint_returns_valid_response_shape():
     app.dependency_overrides.clear()
 
 
+def test_dashboard_endpoint_exposes_freshness_metadata():
+    """PRD section 13: data_timestamp, retrieved_at and provider must all be
+    reachable through the API, not just rendered somewhere in the UI."""
+    app.dependency_overrides[get_market_service] = _seeded_service
+    app.dependency_overrides[get_universe] = load_universe
+    client = TestClient(app)
+
+    body = client.get("/api/dashboard").json()
+
+    assert body["provider"] == "yfinance"
+    assert body["data_timestamp"] is not None
+    assert body["retrieved_at"] is not None
+
+    app.dependency_overrides.clear()
+
+
 def test_dashboard_endpoint_handles_empty_cache_without_error():
     app.dependency_overrides[get_market_service] = lambda: MarketService(
         _NoOpProvider(), DuckDBRepository(":memory:"), load_universe()

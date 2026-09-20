@@ -62,12 +62,20 @@ new class that satisfies `MarketDataProvider` and swapping it in
 rows. The database file lives at `backend/data/market.duckdb` and is
 git-ignored.
 
+FastAPI serves this app's sync endpoints from a threadpool, so one repository
+instance is reached by several requests at once. A DuckDB connection is not
+thread-safe — sharing one returns `None` from concurrent reads and can
+deadlock a read/write mix — so every statement runs on its own `cursor()` and
+writes take a lock.
+
 ### `app/services`
 
 - **`market_service.py`** — orchestrates fetching (via the provider) and
-  caching (via the repository). Enforces the 60-second refresh cooldown and
-  reports `success` / `partial` / `failed` / `cooldown` so a partial
-  provider outage never crashes the API.
+  caching (via the repository). Requests only the sessions missing since the
+  cached edge rather than the whole window, enforces the 60-second refresh
+  cooldown, and reports `success` / `partial` / `failed` / `cooldown` so a
+  partial provider outage never crashes the API. `refresh_if_stale()` is the
+  startup path — see `data-methodology.md` for the full refresh rules.
 - **`metrics_service.py`** — pure, dependency-free calculation functions
   (returns, relative return, breadth, dispersion, ratio returns, defensive/
   cyclical spread, rotation quadrants). Every function returns `None`/`NaN`
@@ -81,7 +89,8 @@ git-ignored.
 
 Thin FastAPI routers. Each endpoint depends on a service via
 `app/deps.py` (`lru_cache`-backed singletons), which is also the seam tests
-use to substitute fakes via `app.dependency_overrides`.
+use to substitute fakes via `app.dependency_overrides`. `main.py` adds a
+lifespan hook that tops up a stale cache before the app starts serving.
 
 ### `app/config`
 

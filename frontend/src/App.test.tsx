@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import * as client from './api/client'
@@ -11,6 +11,7 @@ function buildDashboard(overrides: Partial<Dashboard> = {}): Dashboard {
     as_of: '2026-09-19T20:00:00Z',
     provider: 'yfinance',
     data_timestamp: '2026-09-19T20:00:00Z',
+    retrieved_at: '2026-09-20T12:30:00Z',
     is_stale: false,
     regime: { name: 'INTERNAL_ROTATION', confidence: 'medium', reasons: ['SPY was flat.'] },
     sectors: [],
@@ -73,5 +74,30 @@ describe('App', () => {
     renderApp()
 
     expect(await screen.findByText(/could not reach the backend/i)).toBeInTheDocument()
+  })
+
+  it('triggers a backend refresh and shows a loading state while it runs', async () => {
+    vi.spyOn(client, 'fetchDashboard').mockResolvedValue(buildDashboard())
+    // Never resolves, so the pending state stays observable.
+    const refresh = vi.spyOn(client, 'refreshData').mockReturnValue(new Promise(() => {}))
+
+    renderApp()
+    fireEvent.click(await screen.findByRole('button', { name: /refresh data/i }))
+
+    // The mutation dispatches asynchronously, so wait for the pending state
+    // before asserting the call happened.
+    expect(await screen.findByRole('button', { name: /refreshing/i })).toBeDisabled()
+    expect(refresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('surfaces a failed refresh without discarding the dashboard already on screen', async () => {
+    vi.spyOn(client, 'fetchDashboard').mockResolvedValue(buildDashboard())
+    vi.spyOn(client, 'refreshData').mockRejectedValue(new Error('refresh failed with status 503'))
+
+    renderApp()
+    fireEvent.click(await screen.findByRole('button', { name: /refresh data/i }))
+
+    expect(await screen.findByText(/refresh failed with status 503/i)).toBeInTheDocument()
+    expect(screen.getByText('Internal Rotation')).toBeInTheDocument()
   })
 })

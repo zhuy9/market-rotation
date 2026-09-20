@@ -38,6 +38,7 @@ function App() {
         <DashboardHeader
           provider={dashboard.provider}
           dataTimestamp={dashboard.data_timestamp}
+          retrievedAt={dashboard.retrieved_at}
           onRefresh={refresh}
           isRefreshing={isRefreshing}
         />

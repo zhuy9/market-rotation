@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 
 import numpy as np
@@ -65,6 +66,24 @@ def test_get_history_returns_empty_frame_when_provider_raises(monkeypatch):
     result = provider.get_history(["AAA"], start, end, "1d")
 
     assert result.empty
+
+
+def test_get_history_logs_the_cause_when_the_provider_raises(monkeypatch, caplog):
+    """Degrading to an empty frame keeps the API alive, but the reason must
+    still be recorded rather than silently swallowed."""
+
+    def _boom(**kwargs):
+        raise RuntimeError("rate limited")
+
+    monkeypatch.setattr("app.providers.yfinance_provider.yf.download", _boom)
+
+    with caplog.at_level(logging.ERROR):
+        YFinanceMarketDataProvider().get_history(
+            ["AAA"], datetime(2026, 1, 1, tzinfo=UTC), datetime(2026, 1, 4, tzinfo=UTC), "1d"
+        )
+
+    assert "Market data request failed" in caplog.text
+    assert "rate limited" in caplog.text
 
 
 def test_get_history_with_no_symbols_returns_empty_frame():

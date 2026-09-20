@@ -16,6 +16,10 @@ import { Panel } from './Panel'
 const MAX_TRAIL_SESSIONS = 5
 const DEFAULT_TRAIL_SESSIONS = 1
 
+// A sector with an unknown quadrant (either coordinate missing) gets this
+// instead of being coloured as a real quadrant.
+const NEUTRAL_COLOR = '#a3a3a3'
+
 interface PlotPoint {
   symbol: string
   x: number
@@ -36,7 +40,7 @@ interface DotProps {
 
 function RotationDot({ cx, cy, payload }: DotProps) {
   if (cx === undefined || cy === undefined || !payload) return null
-  const color = QUADRANT_COLOR[payload.quadrant] ?? '#a3a3a3'
+  const color = QUADRANT_COLOR[payload.quadrant] ?? NEUTRAL_COLOR
 
   if (!payload.isCurrent) {
     return <circle cx={cx} cy={cy} r={1.5} fill={color} fillOpacity={0.5} />
@@ -57,7 +61,7 @@ function RotationDot({ cx, cy, payload }: DotProps) {
 // showing fewer sessions is just slicing the most recent end of it.
 function sectorPath(sector: SectorRow, sessions: number): PlotPoint[] {
   if (sector.vs_spy_20d === null || sector.vs_spy_5d === null) return []
-  const quadrant = sector.quadrant ?? 'LAGGING'
+  const quadrant = sector.quadrant ?? ''
 
   // sessions=0 must yield no trail, not slice(-0) === slice(0) === the whole array.
   const historical: PlotPoint[] = (sessions > 0 ? sector.trail.slice(-sessions) : [])
@@ -139,7 +143,7 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
               data={sectorPath(sector, trailSessions)}
               shape={RotationDot}
               line={{
-                stroke: QUADRANT_COLOR[sector.quadrant ?? 'LAGGING'] ?? '#a3a3a3',
+                stroke: QUADRANT_COLOR[sector.quadrant ?? ''] ?? NEUTRAL_COLOR,
                 strokeWidth: 1.25,
                 strokeOpacity: 0.5,
               }}

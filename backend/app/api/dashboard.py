@@ -21,6 +21,7 @@ def get_dashboard(
         as_of=datetime.now(UTC),
         provider=result.provider,
         data_timestamp=result.data_timestamp,
+        retrieved_at=result.retrieved_at,
         is_stale=result.is_stale,
         regime=RegimeOut(
             name=result.regime.regime,

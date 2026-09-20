@@ -46,6 +46,7 @@ export interface Dashboard {
   as_of: string
   provider: string
   data_timestamp: string | null
+  retrieved_at: string | null
   is_stale: boolean
   regime: Regime
   sectors: SectorRow[]

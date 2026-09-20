@@ -50,7 +50,14 @@ def compute_returns_table(prices: pd.DataFrame) -> pd.DataFrame:
 def relative_return(
     instrument_return: float | None, benchmark_return: float | None
 ) -> float | None:
-    """Outperformance vs a benchmark over the same period. Positive = outperformed."""
+    """Outperformance vs a benchmark over the same period. Positive = outperformed.
+
+    Missing data arrives here as None or as NaN (pandas promotes None to NaN
+    once a column holds any float), so both are normalized before comparing --
+    an unguarded NaN would propagate silently instead of returning None.
+    """
+    instrument_return = clean_number(instrument_return)
+    benchmark_return = clean_number(benchmark_return)
     if instrument_return is None or benchmark_return is None:
         return None
     return instrument_return - benchmark_return
@@ -108,7 +115,14 @@ def compute_ratio_returns(
 
 
 def classify_quadrant(x: float | None, y: float | None) -> str | None:
-    """PRD section 17. x = 20D relative return vs SPY, y = 5D relative return vs SPY."""
+    """PRD section 17. x = 20D relative return vs SPY, y = 5D relative return vs SPY.
+
+    Returns None for missing coordinates. NaN is normalized first: every
+    comparison against NaN is False, so an unguarded NaN would fall through
+    to the final `return "LAGGING"` and label unknown data as the worst quadrant.
+    """
+    x = clean_number(x)
+    y = clean_number(y)
     if x is None or y is None:
         return None
     if x > 0 and y > 0:

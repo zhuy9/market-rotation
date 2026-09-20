@@ -3,7 +3,7 @@
 
 broad_risk_on:
   spy_5d_min: 0.01
-  min_positive_sectors: 7 # out of 11
+  min_positive_sectors: 7 # of the sectors in universe.yaml
   rsp_vs_spy_5d_min: 0.0
   hyg_vs_lqd_5d_min: 0.0
 
@@ -19,5 +19,5 @@ defensive_rotation:
 
 broad_risk_off:
   spy_5d_max: -0.01
-  max_positive_sectors: 4 # out of 11
+  max_positive_sectors: 4 # of the sectors in universe.yaml
   min_confirmations: 2 # out of GLD, IEF/TLT, HYG-vs-LQD, VIX

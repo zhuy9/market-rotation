@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime
 
 import pandas as pd
 
 from app.config.groups import load_groups
 from app.config.universe import Universe
 from app.services import metrics_service as metrics
-from app.services.market_service import PROVIDER_NAME, MarketService
+from app.services.market_service import PROVIDER_NAME, STALE_AFTER, MarketService
 from app.services.regime_service import RegimeMetrics, RegimeResult, classify_regime
 
-STALE_AFTER = timedelta(days=4)  # covers a long weekend/holiday plus a day of buffer
 TRAIL_LENGTH = 5  # PRD section 17: show the previous five daily rotation positions
 
 
@@ -21,6 +20,7 @@ TRAIL_LENGTH = 5  # PRD section 17: show the previous five daily rotation positi
 class DashboardResult:
     provider: str
     data_timestamp: pd.Timestamp | None
+    retrieved_at: datetime | None
     is_stale: bool
     regime: RegimeResult
     sectors: list[dict]
@@ -37,12 +37,13 @@ class DashboardResult:
 def build_dashboard(market_service: MarketService, universe: Universe) -> DashboardResult:
     prices = market_service.get_prices()
     groups = load_groups()
-
-    if prices.empty:
-        return _empty_dashboard()
+    retrieved_at = market_service.latest_retrieved_at()
 
     sector_symbols = [i.symbol for i in universe.instruments if i.category == "sectors"]
     other_instruments = [i for i in universe.instruments if i.category != "sectors"]
+
+    if prices.empty:
+        return _empty_dashboard(retrieved_at, len(sector_symbols))
 
     sector_table = metrics.compute_sector_table(prices, sector_symbols, "SPY")
     returns_table = metrics.compute_returns_table(prices).set_index("symbol")
@@ -80,6 +81,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
             spy_return_5d=spy_5d,
             sector_positive_count_5d=breadth_5d.positive,
             sector_negative_count_5d=negative_5d,
+            sector_total=len(sector_symbols),
             sector_dispersion_5d=dispersion_5d,
             rsp_vs_spy_5d=_clean(rsp_spy["return_5d"]),
             hyg_vs_lqd_5d=_clean(hyg_lqd["return_5d"]),
@@ -135,6 +137,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
     return DashboardResult(
         provider=PROVIDER_NAME,
         data_timestamp=data_timestamp,
+        retrieved_at=retrieved_at,
         is_stale=is_stale,
         regime=regime,
         sectors=sectors_out,
@@ -149,7 +152,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
     )
 
 
-def _empty_dashboard() -> DashboardResult:
+def _empty_dashboard(retrieved_at: datetime | None, sector_total: int) -> DashboardResult:
     empty_breadth = metrics.BreadthResult(positive=0, total=0, ratio=None)
     empty_ratio = {"return_1d": None, "return_5d": None, "return_20d": None}
     no_data_regime = classify_regime(
@@ -157,6 +160,7 @@ def _empty_dashboard() -> DashboardResult:
             spy_return_5d=None,
             sector_positive_count_5d=0,
             sector_negative_count_5d=0,
+            sector_total=sector_total,
             sector_dispersion_5d=None,
             rsp_vs_spy_5d=None,
             hyg_vs_lqd_5d=None,
@@ -173,6 +177,7 @@ def _empty_dashboard() -> DashboardResult:
     return DashboardResult(
         provider=PROVIDER_NAME,
         data_timestamp=None,
+        retrieved_at=retrieved_at,
         is_stale=True,
         regime=no_data_regime,
         sectors=[],

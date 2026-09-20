@@ -13,6 +13,12 @@ HISTORY_DAYS = 400
 DEFAULT_INTERVAL = "1d"
 PROVIDER_NAME = "yfinance"
 REFRESH_COOLDOWN = timedelta(seconds=60)
+# Re-request a few sessions behind the cached edge so late corrections and
+# split adjustments land. INSERT OR REPLACE makes the overlap idempotent.
+REFRESH_OVERLAP = timedelta(days=5)
+# Long weekend or holiday, plus a day of buffer. Used both to decide whether
+# startup needs to top the cache up and to label the dashboard STALE DATA.
+STALE_AFTER = timedelta(days=4)
 
 
 @dataclass(frozen=True)
@@ -44,9 +50,10 @@ class MarketService:
                 status="cooldown", updated_symbols=0, failed_symbols=[], as_of=self._last_refresh_at
             )
 
-        start = now - timedelta(days=HISTORY_DAYS)
         symbols = self._universe.symbols
-        history = self._provider.get_history(symbols, start, now, DEFAULT_INTERVAL)
+        history = self._provider.get_history(
+            symbols, self._history_start(now), now, DEFAULT_INTERVAL
+        )
 
         updated = set(history["symbol"].unique()) if not history.empty else set()
         failed_symbols = sorted(set(symbols) - updated)
@@ -64,6 +71,43 @@ class MarketService:
             status=status, updated_symbols=len(updated), failed_symbols=failed_symbols, as_of=now
         )
 
+    def refresh_if_stale(self) -> RefreshResult | None:
+        """Startup path (PRD section 12): top the cache up when it is empty or
+        older than expected, so the first dashboard request has data to serve.
+        Returns None when the cache is already current and nothing was fetched.
+        """
+        newest = self._newest_cached()
+        if newest is not None and not self._is_stale(newest):
+            return None
+        return self.refresh()
+
+    def _history_start(self, now: datetime) -> datetime:
+        """PRD section 12: request only the missing data instead of
+        re-downloading the whole window. Falls back to a full backfill while
+        any configured symbol has no cached data at all, so a new ticker is
+        still filled in with real history.
+        """
+        full_start = now - timedelta(days=HISTORY_DAYS)
+        cached = self._repository.latest_timestamps(self._universe.symbols, DEFAULT_INTERVAL)
+        if len(cached) < len(self._universe.symbols):
+            return full_start
+        oldest = _as_utc(min(cached.values()))
+        return max(full_start, oldest - REFRESH_OVERLAP)
+
+    def _newest_cached(self) -> datetime | None:
+        cached = self._repository.latest_timestamps(self._universe.symbols, DEFAULT_INTERVAL)
+        if len(cached) < len(self._universe.symbols):
+            return None  # a missing symbol counts as "not current"
+        return _as_utc(max(cached.values()))
+
+    @staticmethod
+    def _is_stale(newest: datetime) -> bool:
+        return datetime.now(UTC) - newest > STALE_AFTER
+
+    def latest_retrieved_at(self) -> datetime | None:
+        """When a provider last wrote to the cache (PRD section 13)."""
+        return self._repository.latest_retrieved_at(DEFAULT_INTERVAL)
+
     def get_prices(
         self, symbols: list[str] | None = None, interval: str = DEFAULT_INTERVAL
     ) -> pd.DataFrame:
@@ -71,3 +115,10 @@ class MarketService:
         now = datetime.now(UTC)
         start = now - timedelta(days=HISTORY_DAYS)
         return self._repository.get_prices(symbols, start, now, interval)
+
+
+def _as_utc(timestamp: datetime) -> datetime:
+    """Bar timestamps come back from DuckDB as naive trading dates. Treat them
+    as UTC so they can be compared against `datetime.now(UTC)`.
+    """
+    return timestamp if timestamp.tzinfo is not None else timestamp.replace(tzinfo=UTC)

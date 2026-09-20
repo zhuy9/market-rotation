@@ -46,3 +46,38 @@ def test_refresh_endpoint_returns_result_shape():
     assert body["failed_symbols"] == []
 
     app.dependency_overrides.clear()
+
+
+# --- startup refresh wiring (PRD section 12) -------------------------------
+
+
+def test_startup_tops_up_the_cache_before_serving(monkeypatch):
+    calls: list[str] = []
+
+    class _StartupService:
+        def refresh_if_stale(self) -> RefreshResult:
+            calls.append("refreshed")
+            return RefreshResult(
+                status="success", updated_symbols=2, failed_symbols=[], as_of=datetime(2026, 1, 1)
+            )
+
+    monkeypatch.setattr("app.main.get_market_service", _StartupService)
+
+    with TestClient(app):
+        pass
+
+    assert calls == ["refreshed"]
+
+
+def test_startup_survives_a_provider_outage(monkeypatch):
+    """A dead provider at boot must not stop the API from starting — the
+    dashboard degrades to cached data plus a warning instead."""
+
+    class _BrokenService:
+        def refresh_if_stale(self) -> RefreshResult:
+            raise RuntimeError("network unavailable")
+
+    monkeypatch.setattr("app.main.get_market_service", _BrokenService)
+
+    with TestClient(app) as client:
+        assert client.get("/api/health").status_code == 200

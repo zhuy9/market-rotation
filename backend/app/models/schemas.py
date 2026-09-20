@@ -66,6 +66,7 @@ class DashboardResponse(BaseModel):
     as_of: datetime
     provider: str
     data_timestamp: datetime | None
+    retrieved_at: datetime | None
     is_stale: bool
     regime: RegimeOut
     sectors: list[SectorRowOut]

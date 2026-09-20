@@ -2,6 +2,7 @@
   "spy_return_5d": 0.003,
   "sector_positive_count_5d": 5,
   "sector_negative_count_5d": 6,
+  "sector_total": 11,
   "sector_dispersion_5d": 0.024,
   "rsp_vs_spy_5d": 0.001,
   "hyg_vs_lqd_5d": 0.0,

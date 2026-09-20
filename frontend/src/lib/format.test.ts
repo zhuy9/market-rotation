@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatPercent, formatTimestamp, returnColorClass } from './format'
+import { formatPercent, formatRetrievedAt, formatTradingDate, returnColorClass } from './format'
 
 describe('formatPercent', () => {
   it('formats a positive value with a leading plus sign', () => {
@@ -25,12 +25,25 @@ describe('returnColorClass', () => {
   })
 })
 
-describe('formatTimestamp', () => {
+describe('formatTradingDate', () => {
   it('returns n/a for a missing timestamp', () => {
-    expect(formatTimestamp(null)).toBe('n/a')
+    expect(formatTradingDate(null)).toBe('n/a')
   })
 
-  it('formats an ISO timestamp into a readable string', () => {
-    expect(formatTimestamp('2026-09-19T20:00:00Z')).not.toBe('n/a')
+  it('shows the date without a clock time, since daily bars sit at midnight', () => {
+    const formatted = formatTradingDate('2026-09-19T20:00:00Z')
+
+    expect(formatted).not.toBe('n/a')
+    expect(formatted).not.toMatch(/\d:\d\d/)
+  })
+})
+
+describe('formatRetrievedAt', () => {
+  it('returns n/a for a missing timestamp', () => {
+    expect(formatRetrievedAt(null)).toBe('n/a')
+  })
+
+  it('shows a clock time, since this is a real wall-clock moment', () => {
+    expect(formatRetrievedAt('2026-09-19T20:00:00Z')).toMatch(/\d:\d\d/)
   })
 })

@@ -1,9 +1,10 @@
-import { formatTimestamp } from '../lib/format'
+import { formatRetrievedAt, formatTradingDate } from '../lib/format'
 import { RefreshButton } from './RefreshButton'
 
 interface DashboardHeaderProps {
   provider: string
   dataTimestamp: string | null
+  retrievedAt: string | null
   onRefresh: () => void
   isRefreshing: boolean
 }
@@ -11,6 +12,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({
   provider,
   dataTimestamp,
+  retrievedAt,
   onRefresh,
   isRefreshing,
 }: DashboardHeaderProps) {
@@ -21,7 +23,8 @@ export function DashboardHeader({
           Market Rotation Dashboard
         </h1>
         <p className="text-xs text-neutral-500">
-          Last updated: {formatTimestamp(dataTimestamp)} · Source: {provider}
+          Data as of: {formatTradingDate(dataTimestamp)} · Retrieved:{' '}
+          {formatRetrievedAt(retrievedAt)} · Source: {provider}
         </p>
       </div>
       <RefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} />

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
 from app.config.universe import Instrument, Universe
 from app.providers.base import PRICE_COLUMNS
-from app.services.market_service import MarketService
+from app.services.market_service import HISTORY_DAYS, MarketService
 from app.storage.duckdb_repository import DuckDBRepository
 
 
@@ -16,9 +16,11 @@ class FakeProvider:
     def __init__(self, history: pd.DataFrame) -> None:
         self._history = history
         self.calls = 0
+        self.starts: list[datetime] = []
 
     def get_history(self, symbols, start, end, interval):
         self.calls += 1
+        self.starts.append(start)
         if self._history.empty:
             return self._history
         return self._history[self._history["symbol"].isin(symbols)]
@@ -97,4 +99,98 @@ def test_refresh_enforces_cooldown():
     second = service.refresh()
 
     assert second.status == "cooldown"
+    assert provider.calls == 1
+
+
+# --- incremental refresh window (PRD section 12) ---------------------------
+
+
+def _seed(repo: DuckDBRepository, symbols: list[str], newest: datetime) -> None:
+    """Give each symbol two cached daily bars ending at `newest`."""
+    timestamps = [newest - timedelta(days=1), newest]
+    frame = pd.DataFrame(
+        [
+            {
+                "symbol": symbol,
+                "timestamp": timestamp,
+                "open": 10.0,
+                "high": 10.5,
+                "low": 9.5,
+                "close": 10.2,
+                "volume": 1000.0,
+            }
+            for symbol in symbols
+            for timestamp in timestamps
+        ]
+    )
+    repo.upsert_prices(frame, "1d", "test", datetime.now(UTC))
+
+
+def test_refresh_requests_full_history_when_cache_is_empty():
+    provider = FakeProvider(_history_for(["AAA", "BBB"]))
+    service = MarketService(provider, DuckDBRepository(":memory:"), _universe())
+
+    service.refresh()
+
+    requested_days = (datetime.now(UTC) - provider.starts[0]).days
+    assert requested_days >= HISTORY_DAYS - 1
+
+
+def test_refresh_only_requests_missing_data_when_cache_is_current():
+    """The whole point of PRD section 12: top up from the cached edge instead
+    of re-downloading 400 days on every refresh."""
+    repo = DuckDBRepository(":memory:")
+    _seed(repo, ["AAA", "BBB"], datetime.now(UTC).replace(tzinfo=None))
+    provider = FakeProvider(_history_for(["AAA", "BBB"]))
+    service = MarketService(provider, repo, _universe())
+
+    service.refresh()
+
+    requested_days = (datetime.now(UTC) - provider.starts[0]).days
+    assert requested_days < 10
+
+
+def test_refresh_backfills_full_history_when_one_symbol_has_no_cached_data():
+    """A newly added ticker must get real history, not just the recent window."""
+    repo = DuckDBRepository(":memory:")
+    _seed(repo, ["AAA"], datetime.now(UTC).replace(tzinfo=None))  # BBB never cached
+    provider = FakeProvider(_history_for(["AAA", "BBB"]))
+    service = MarketService(provider, repo, _universe())
+
+    service.refresh()
+
+    requested_days = (datetime.now(UTC) - provider.starts[0]).days
+    assert requested_days >= HISTORY_DAYS - 1
+
+
+# --- startup refresh (PRD section 12) --------------------------------------
+
+
+def test_refresh_if_stale_fetches_when_cache_is_empty():
+    provider = FakeProvider(_history_for(["AAA", "BBB"]))
+    service = MarketService(provider, DuckDBRepository(":memory:"), _universe())
+
+    result = service.refresh_if_stale()
+
+    assert result is not None
+    assert provider.calls == 1
+
+
+def test_refresh_if_stale_does_nothing_when_cache_is_current():
+    repo = DuckDBRepository(":memory:")
+    _seed(repo, ["AAA", "BBB"], datetime.now(UTC).replace(tzinfo=None))
+    provider = FakeProvider(_history_for(["AAA", "BBB"]))
+    service = MarketService(provider, repo, _universe())
+
+    assert service.refresh_if_stale() is None
+    assert provider.calls == 0
+
+
+def test_refresh_if_stale_fetches_when_cached_data_is_old():
+    repo = DuckDBRepository(":memory:")
+    _seed(repo, ["AAA", "BBB"], datetime.now(UTC).replace(tzinfo=None) - timedelta(days=10))
+    provider = FakeProvider(_history_for(["AAA", "BBB"]))
+    service = MarketService(provider, repo, _universe())
+
+    assert service.refresh_if_stale() is not None
     assert provider.calls == 1

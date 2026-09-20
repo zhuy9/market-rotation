@@ -96,6 +96,15 @@ def test_relative_return_none_when_either_side_missing():
     assert relative_return(0.05, None) is None
 
 
+def test_relative_return_treats_nan_like_missing_data():
+    """pandas turns a None return into NaN as soon as the column holds a float,
+    so NaN must be handled exactly like None rather than propagating."""
+    nan = float("nan")
+
+    assert relative_return(nan, 0.02) is None
+    assert relative_return(0.05, nan) is None
+
+
 def test_sector_breadth_counts_positive_over_available():
     returns = {f"S{i}": 0.01 for i in range(7)} | {f"S{i}": -0.01 for i in range(7, 11)}
 
@@ -235,6 +244,32 @@ def test_compute_sector_table_shape_and_quadrants():
     # (pandas promotes a column's None entries to NaN once mixed with values.)
     assert pd.isna(table.loc["XLRE", "return_1d"])
     assert pd.isna(table.loc["XLRE", "quadrant"])
+
+
+def test_compute_sector_table_partial_history_gives_unknown_quadrant_not_lagging():
+    """A sector with enough history for a 5D return but not a 20D one must come
+    back with no quadrant. The NaN 20D value fails every comparison, so without
+    an explicit guard it fell through to the final branch and was labelled
+    LAGGING -- the worst quadrant -- while actually outperforming SPY."""
+    spy_closes = [100.0 + i for i in range(25)]
+    short_closes = [100.0 + 3 * i for i in range(10)]  # 10 sessions, clearly outperforming
+    prices = pd.concat(
+        [_price_frame("SPY", spy_closes), _price_frame("XLRE", short_closes)],
+        ignore_index=True,
+    )
+
+    table = compute_sector_table(prices, ["XLRE"], "SPY").set_index("symbol")
+
+    assert table.loc["XLRE", "vs_spy_5d"] > 0
+    assert pd.isna(table.loc["XLRE", "vs_spy_20d"])
+    assert table.loc["XLRE", "quadrant"] is None
+
+
+def test_classify_quadrant_none_for_nan_coordinates():
+    nan = float("nan")
+
+    assert classify_quadrant(nan, 0.01) is None
+    assert classify_quadrant(0.01, nan) is None
 
 
 # --- rotation trail (PRD section 17, "faded trail") ------------------------

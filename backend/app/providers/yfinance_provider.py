@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd
@@ -9,6 +10,8 @@ from app.providers.base import PRICE_COLUMNS
 
 # This is the ONLY module allowed to import yfinance. Everything else in the
 # app depends on the MarketDataProvider protocol.
+
+logger = logging.getLogger(__name__)
 
 
 class YFinanceMarketDataProvider:
@@ -37,7 +40,9 @@ class YFinanceMarketDataProvider:
             )
         except Exception:
             # Whole-batch failure (network down, rate limited, etc.) must not
-            # crash the caller — treat it as "no data available this round".
+            # crash the caller — the refresh reports every symbol as failed
+            # instead. Log the cause so it is recoverable rather than swallowed.
+            logger.exception("Market data request failed for %d symbol(s)", len(symbols))
             return pd.DataFrame(columns=PRICE_COLUMNS)
 
         return _normalize(raw, symbols)
