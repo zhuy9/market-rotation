@@ -1,0 +1,16 @@
+{
+  "spy_return_5d": 0.005,
+  "sector_positive_count_5d": 6,
+  "sector_negative_count_5d": 5,
+  "sector_dispersion_5d": 0.01,
+  "rsp_vs_spy_5d": -0.001,
+  "hyg_vs_lqd_5d": 0.0005,
+  "defensive_spread_5d": 0.002,
+  "defensive_outperform_count": 1,
+  "qqq_vs_spy_5d": 0.002,
+  "iwm_vs_spy_5d": 0.001,
+  "gld_vs_spy_5d": -0.005,
+  "ief_vs_spy_5d": -0.003,
+  "tlt_vs_spy_5d": -0.004,
+  "vix_return_5d": -0.02
+}

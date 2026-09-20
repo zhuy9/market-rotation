@@ -1,0 +1,23 @@
+# Thresholds for the deterministic regime engine (PRD section 26).
+# Returns are fractions (0.01 = 1%), not percentages.
+
+broad_risk_on:
+  spy_5d_min: 0.01
+  min_positive_sectors: 7 # out of 11
+  rsp_vs_spy_5d_min: 0.0
+  hyg_vs_lqd_5d_min: 0.0
+
+internal_rotation:
+  spy_5d_abs_max: 0.02
+  min_positive_sectors: 3
+  min_negative_sectors: 3
+  dispersion_5d_min: 0.02
+
+defensive_rotation:
+  spread_5d_min: 0.01
+  min_defensive_outperformers: 2 # out of XLV/XLP/XLU
+
+broad_risk_off:
+  spy_5d_max: -0.01
+  max_positive_sectors: 4 # out of 11
+  min_confirmations: 2 # out of GLD, IEF/TLT, HYG-vs-LQD, VIX
