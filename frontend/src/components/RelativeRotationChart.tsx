@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 
 import type { SectorRow } from '../api/types'
+import { TOOLTIP_STYLE } from '../lib/chart'
 import { QUADRANT_COLOR } from '../lib/regime'
 import { Panel } from './Panel'
 
@@ -132,9 +133,7 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
           <ReferenceLine y={0} stroke="#525252" />
           <Tooltip
             cursor={{ strokeDasharray: '3 3' }}
-            contentStyle={{ background: '#171717', border: '1px solid #404040', fontSize: 12 }}
-            itemStyle={{ color: '#e5e5e5' }}
-            labelStyle={{ color: '#e5e5e5' }}
+            {...TOOLTIP_STYLE}
             formatter={(value) => `${Number(value).toFixed(2)}%`}
           />
           {plottable.map((sector) => (

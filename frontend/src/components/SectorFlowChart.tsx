@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 
 import type { Flows } from '../api/types'
+import { TOOLTIP_STYLE } from '../lib/chart'
 import { formatFlow, formatTradingDate } from '../lib/format'
 import { Panel } from './Panel'
 
@@ -99,14 +100,7 @@ export function SectorFlowChart({ flows }: SectorFlowChartProps) {
               <ReferenceLine x={0} stroke="#525252" />
               <Tooltip
                 cursor={{ fill: '#ffffff10' }}
-                contentStyle={{
-                  background: '#171717',
-                  border: '1px solid #404040',
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-                itemStyle={{ color: '#e5e5e5' }}
-                labelStyle={{ color: '#e5e5e5' }}
+                {...TOOLTIP_STYLE}
                 formatter={(value) => [formatFlow(Number(value)), 'Net flow'] as [string, string]}
                 labelFormatter={(label) =>
                   data.find((row) => row.symbol === label)?.name ?? String(label)
