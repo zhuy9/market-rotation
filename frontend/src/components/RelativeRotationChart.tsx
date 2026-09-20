@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
 
 import type { SectorRow } from '../api/types'
 import { QUADRANT_COLOR } from '../lib/regime'
 import { Panel } from './Panel'
+
+const MAX_TRAIL_SESSIONS = 5
+const DEFAULT_TRAIL_SESSIONS = 1
 
 interface PlotPoint {
   symbol: string
@@ -39,13 +43,16 @@ function RotationDot({ cx, cy, payload }: DotProps) {
   )
 }
 
-// Trail (previous sessions, oldest first) + current position, as one path Recharts
-// can connect with a line — PRD section 17's optional "faded trail".
-function sectorPath(sector: SectorRow): PlotPoint[] {
+// Trail (previous `sessions` sessions, oldest first) + current position, as one
+// path Recharts can connect with a line — PRD section 17's optional "faded trail".
+// sector.trail is always oldest-first with up to MAX_TRAIL_SESSIONS points, so
+// showing fewer sessions is just slicing the most recent end of it.
+function sectorPath(sector: SectorRow, sessions: number): PlotPoint[] {
   if (sector.vs_spy_20d === null || sector.vs_spy_5d === null) return []
   const quadrant = sector.quadrant ?? 'LAGGING'
 
   const historical: PlotPoint[] = sector.trail
+    .slice(-sessions)
     .filter((p) => p.x !== null && p.y !== null)
     .map((p) => ({
       symbol: sector.symbol,
@@ -66,13 +73,29 @@ function sectorPath(sector: SectorRow): PlotPoint[] {
 }
 
 export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
+  const [trailSessions, setTrailSessions] = useState(DEFAULT_TRAIL_SESSIONS)
   const plottable = sectors.filter((s) => s.vs_spy_20d !== null && s.vs_spy_5d !== null)
 
   return (
     <Panel
       title="Relative Rotation"
-      titleTooltip="Each sector's last 5 sessions, connected by a faded trail to its current position (the labeled dot)."
+      titleTooltip="Each sector's recent sessions, connected by a faded trail to its current position (the labeled dot). Adjust how many sessions of trail to show below."
     >
+      <div className="mb-2 flex items-center justify-end gap-2 px-2">
+        <label htmlFor="trail-sessions" className="text-xs text-neutral-500">
+          Trail: {trailSessions} session{trailSessions === 1 ? '' : 's'}
+        </label>
+        <input
+          id="trail-sessions"
+          type="range"
+          min={1}
+          max={MAX_TRAIL_SESSIONS}
+          step={1}
+          value={trailSessions}
+          onChange={(e) => setTrailSessions(Number(e.target.value))}
+          className="w-24 accent-neutral-400"
+        />
+      </div>
       <div className="mb-1 grid grid-cols-2 px-2 text-[10px] tracking-wide text-neutral-600 uppercase">
         <span className="text-left">Improving</span>
         <span className="text-right">Leading</span>
@@ -105,7 +128,7 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
           {plottable.map((sector) => (
             <Scatter
               key={sector.symbol}
-              data={sectorPath(sector)}
+              data={sectorPath(sector, trailSessions)}
               shape={RotationDot}
               line={{
                 stroke: QUADRANT_COLOR[sector.quadrant ?? 'LAGGING'] ?? '#a3a3a3',
