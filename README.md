@@ -6,6 +6,8 @@ A personal, open-source dashboard that helps answer:
 > there evidence of a broader movement away from equities into defensive or
 > alternative assets?
 
+![Dashboard screenshot](docs/screenshots/dashboard.png)
+
 ## What it does
 
 - Tracks U.S. sector ETFs, broad equity benchmarks, bonds/credit, gold and
@@ -49,29 +51,32 @@ and refreshed on demand — see [Refresh behavior](docs/data-methodology.md).
 
 ## Local setup
 
-Requirements: Python 3.12+, Node 20+.
+Requirements: Python 3.12+, Node 20+, [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
-# Backend
+# Backend — runs on http://localhost:8000
 cd backend
-uv sync            # or: pip install -e ".[dev]"
+uv sync
 uv run uvicorn app.main:app --reload
 
-# Frontend (separate terminal)
+# Frontend (separate terminal) — runs on http://localhost:5173
 cd frontend
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173. No credentials are required.
+Open http://localhost:5173. The database starts empty — click
+**Refresh Data** (or `curl -X POST http://localhost:8000/api/data/refresh`)
+to download ~400 days of history for the tracked universe, then the regime
+and metrics appear. No credentials are required at any step.
 
 ## Development commands
 
 ```bash
 # backend
 cd backend
-ruff check .
-pytest
+uv run ruff check .
+uv run pytest --cov=app --cov-report=term-missing
 
 # frontend
 cd frontend
