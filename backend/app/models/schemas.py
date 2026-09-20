@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class InstrumentOut(BaseModel):
@@ -25,6 +25,9 @@ class RegimeOut(BaseModel):
 
 
 class BreadthOut(BaseModel):
+    # Built from metrics_service.BreadthResult, a NamedTuple with these fields.
+    model_config = ConfigDict(from_attributes=True)
+
     positive: int
     total: int
     ratio: float | None
@@ -62,6 +65,14 @@ class RatioOut(BaseModel):
     return_20d: float | None
 
 
+class RatiosOut(BaseModel):
+    """The two ratio proxies the dashboard always reports: equal-weight
+    breadth (PRD section 21) and credit risk (PRD section 22)."""
+
+    rsp_spy: RatioOut
+    hyg_lqd: RatioOut
+
+
 class DashboardResponse(BaseModel):
     as_of: datetime
     provider: str
@@ -76,5 +87,5 @@ class DashboardResponse(BaseModel):
     dispersion_1d: float | None
     dispersion_5d: float | None
     defensive_spread_5d: float | None
-    ratios: dict[str, RatioOut]
+    ratios: RatiosOut
     warnings: list[str]

@@ -61,6 +61,22 @@ def test_dashboard_endpoint_returns_valid_response_shape():
     app.dependency_overrides.clear()
 
 
+def test_dashboard_endpoint_maps_breadth_and_ratio_fields_by_name():
+    """The seeded universe ramps every sector upward, so breadth is 11/11.
+    Guards against the BreadthResult NamedTuple being read positionally."""
+    app.dependency_overrides[get_market_service] = _seeded_service
+    app.dependency_overrides[get_universe] = load_universe
+    client = TestClient(app)
+
+    body = client.get("/api/dashboard").json()
+
+    assert body["breadth_5d"] == {"positive": 11, "total": 11, "ratio": 1.0}
+    assert set(body["ratios"]) == {"rsp_spy", "hyg_lqd"}
+    assert set(body["ratios"]["rsp_spy"]) == {"return_1d", "return_5d", "return_20d"}
+
+    app.dependency_overrides.clear()
+
+
 def test_dashboard_endpoint_exposes_freshness_metadata():
     """PRD section 13: data_timestamp, retrieved_at and provider must all be
     reachable through the API, not just rendered somewhere in the UI."""

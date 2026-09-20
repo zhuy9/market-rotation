@@ -42,6 +42,13 @@ export interface Ratio {
   return_20d: number | null
 }
 
+/** The two ratio proxies the backend always reports: equal-weight breadth
+ *  (RSP/SPY) and credit risk (HYG/LQD). */
+export interface Ratios {
+  rsp_spy: Ratio
+  hyg_lqd: Ratio
+}
+
 export interface Dashboard {
   as_of: string
   provider: string
@@ -56,7 +63,7 @@ export interface Dashboard {
   dispersion_1d: number | null
   dispersion_5d: number | null
   defensive_spread_5d: number | null
-  ratios: Record<string, Ratio>
+  ratios: Ratios
   warnings: string[]
 }
 
