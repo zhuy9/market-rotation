@@ -1,0 +1,39 @@
+sectors:
+  XLK: Technology
+  XLF: Financials
+  XLE: Energy
+  XLV: Health Care
+  XLI: Industrials
+  XLY: Consumer Discretionary
+  XLP: Consumer Staples
+  XLU: Utilities
+  XLB: Materials
+  XLRE: Real Estate
+  XLC: Communication Services
+
+equity:
+  SPY: S&P 500
+  QQQ: Nasdaq 100
+  IWM: Russell 2000
+  RSP: S&P 500 Equal Weight
+
+rates:
+  SHY: Short Treasury
+  IEF: 7-10Y Treasury
+  TLT: 20+Y Treasury
+
+credit:
+  HYG: High Yield Credit
+  LQD: Investment Grade Credit
+
+commodities:
+  GLD: Gold
+  SLV: Silver
+  USO: Oil
+  DBC: Broad Commodities
+
+currency:
+  UUP: US Dollar
+
+volatility:
+  ^VIX: VIX

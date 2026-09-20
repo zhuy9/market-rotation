@@ -1,0 +1,35 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+import yaml
+
+DEFAULT_UNIVERSE_PATH = Path(__file__).parent / "universe.yaml"
+
+
+@dataclass(frozen=True)
+class Instrument:
+    symbol: str
+    name: str
+    category: str
+
+
+class Universe:
+    def __init__(self, instruments: list[Instrument]) -> None:
+        self.instruments = instruments
+        self._by_symbol = {i.symbol: i for i in instruments}
+
+    @property
+    def symbols(self) -> list[str]:
+        return list(self._by_symbol)
+
+
+def load_universe(path: Path = DEFAULT_UNIVERSE_PATH) -> Universe:
+    data = yaml.safe_load(path.read_text())
+    instruments = [
+        Instrument(symbol=symbol, name=name, category=category)
+        for category, symbols in data.items()
+        for symbol, name in symbols.items()
+    ]
+    return Universe(instruments)
