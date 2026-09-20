@@ -56,7 +56,6 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
             type="number"
             dataKey="x"
             name="20D vs SPY"
-            unit="%"
             stroke="#525252"
             tick={{ fill: '#a3a3a3', fontSize: 11 }}
           />
@@ -64,7 +63,6 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
             type="number"
             dataKey="y"
             name="5D vs SPY"
-            unit="%"
             stroke="#525252"
             tick={{ fill: '#a3a3a3', fontSize: 11 }}
           />
@@ -73,6 +71,8 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
           <Tooltip
             cursor={{ strokeDasharray: '3 3' }}
             contentStyle={{ background: '#171717', border: '1px solid #404040', fontSize: 12 }}
+            itemStyle={{ color: '#e5e5e5' }}
+            labelStyle={{ color: '#e5e5e5' }}
             formatter={(value) => `${Number(value).toFixed(2)}%`}
           />
           <Scatter data={points} shape={RotationDot} />

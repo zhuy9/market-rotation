@@ -1,5 +1,6 @@
 import type { Breadth } from '../api/types'
 import { formatPercent } from '../lib/format'
+import { InfoTooltip } from './InfoTooltip'
 import { Panel } from './Panel'
 
 interface MarketInternalsPanelProps {
@@ -18,11 +19,35 @@ export function MarketInternalsPanel({
   defensiveSpread5d,
 }: MarketInternalsPanelProps) {
   const stats = [
-    { label: 'Sector Breadth (5D)', value: `${breadth5d.positive} / ${breadth5d.total}` },
-    { label: 'Sector Dispersion (5D)', value: formatPercent(dispersion5d) },
-    { label: 'RSP vs SPY (5D)', value: formatPercent(rsp5d) },
-    { label: 'HYG vs LQD (5D)', value: formatPercent(hygLqd5d) },
-    { label: 'Defensive Spread (5D)', value: formatPercent(defensiveSpread5d) },
+    {
+      label: 'Sector Breadth (5D)',
+      value: `${breadth5d.positive} / ${breadth5d.total}`,
+      description: 'How many of the 11 tracked sector ETFs had a positive 5-day return.',
+    },
+    {
+      label: 'Sector Dispersion (5D)',
+      value: formatPercent(dispersion5d),
+      description:
+        'How spread out sector returns are (standard deviation of 5-day sector returns). Higher means more internal rotation between sectors rather than a uniform market move.',
+    },
+    {
+      label: 'RSP vs SPY (5D)',
+      value: formatPercent(rsp5d),
+      description:
+        'Equal-weight S&P (RSP) minus cap-weighted S&P (SPY), 5-day return. Positive means broader participation beyond the largest stocks; negative means mega-caps are driving the index.',
+    },
+    {
+      label: 'HYG vs LQD (5D)',
+      value: formatPercent(hygLqd5d),
+      description:
+        'High-yield credit (HYG) minus investment-grade credit (LQD), 5-day return. Positive means credit markets are leaning risk-on; negative means credit risk appetite is weakening.',
+    },
+    {
+      label: 'Defensive Spread (5D)',
+      value: formatPercent(defensiveSpread5d),
+      description:
+        'Mean 5-day return of defensive sectors (XLV, XLP, XLU) minus cyclical sectors (XLK, XLY, XLI, XLF, XLE, XLB). Positive means defensive sectors are leading.',
+    },
   ]
 
   return (
@@ -30,7 +55,10 @@ export function MarketInternalsPanel({
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         {stats.map((stat) => (
           <div key={stat.label}>
-            <dt className="text-xs text-neutral-500">{stat.label}</dt>
+            <dt className="flex items-center text-xs text-neutral-500">
+              {stat.label}
+              <InfoTooltip text={stat.description} />
+            </dt>
             <dd className="mt-1 font-mono text-lg tabular-nums text-neutral-100">{stat.value}</dd>
           </div>
         ))}
