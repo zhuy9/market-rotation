@@ -1,0 +1,8 @@
+{
+  "name": "market-rotation-dashboard",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && uv run uvicorn app.main:app --reload",
+    "dev:frontend": "cd frontend && npm run dev"
+  }
+}

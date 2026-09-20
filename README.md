@@ -57,12 +57,12 @@ Requirements: Python 3.12+, Node 20+, [`uv`](https://docs.astral.sh/uv/).
 # Backend — runs on http://localhost:8000
 cd backend
 uv sync
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload   # or, from the repo root: npm run dev:backend
 
 # Frontend (separate terminal) — runs on http://localhost:5173
 cd frontend
 npm install
-npm run dev
+npm run dev                            # or, from the repo root: npm run dev:frontend
 ```
 
 Open http://localhost:5173. The database starts empty — click

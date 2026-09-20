@@ -6,6 +6,8 @@
 # Data / cache
 *.db
 *.duckdb
+*.duckdb.wal
+backend/data/
 data/raw/
 data/cache/
 .cache/
