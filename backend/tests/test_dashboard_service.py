@@ -70,7 +70,7 @@ def test_build_dashboard_end_to_end_matches_broad_risk_on():
     assert result.warnings == []
     assert len(result.sectors) == 11
     assert len(result.cross_asset) == len(universe.symbols) - 11
-    assert result.regime.regime == "BROAD_RISK_ON"
+    assert result.regime.name == "BROAD_RISK_ON"
     assert result.breadth_5d.positive == 11
 
 
@@ -112,7 +112,7 @@ def test_build_dashboard_handles_completely_empty_cache():
 
     assert result.sectors == []
     assert result.cross_asset == []
-    assert result.regime.regime == "MIXED"
+    assert result.regime.name == "MIXED"
     assert result.data_timestamp is None
     assert result.is_stale is True
     assert result.warnings == ["No cached market data available. Trigger a refresh."]

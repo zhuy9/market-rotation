@@ -2,40 +2,21 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 
-from app.config.groups import load_groups
-from app.config.universe import Universe
+from app.config.universe import Universe, load_groups
+from app.models.schemas import DashboardResponse, RegimeOut
 from app.services import metrics_service as metrics
 from app.services.market_service import PROVIDER_NAME, STALE_AFTER, MarketService
 from app.services.metrics_service import clean_number as _clean
-from app.services.regime_service import RegimeMetrics, RegimeResult, classify_regime
+from app.services.regime_service import RegimeMetrics, classify_regime
 
 TRAIL_LENGTH = 5  # PRD section 17: show the previous five daily rotation positions
 
 
-@dataclass(frozen=True)
-class DashboardResult:
-    provider: str
-    data_timestamp: pd.Timestamp | None
-    retrieved_at: datetime | None
-    is_stale: bool
-    regime: RegimeResult
-    sectors: list[dict]
-    cross_asset: list[dict]
-    breadth_1d: metrics.BreadthResult
-    breadth_5d: metrics.BreadthResult
-    dispersion_1d: float | None
-    dispersion_5d: float | None
-    defensive_spread_5d: float | None
-    ratios: dict[str, dict]
-    warnings: list[str]
-
-
-def build_dashboard(market_service: MarketService, universe: Universe) -> DashboardResult:
+def build_dashboard(market_service: MarketService, universe: Universe) -> DashboardResponse:
     prices = market_service.get_prices()
     groups = load_groups()
     retrieved_at = market_service.latest_retrieved_at()
@@ -131,12 +112,13 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
     if is_stale:
         warnings.append("STALE DATA: latest observation is older than expected.")
 
-    return DashboardResult(
+    return DashboardResponse(
+        as_of=datetime.now(UTC),
         provider=PROVIDER_NAME,
         data_timestamp=data_timestamp,
         retrieved_at=retrieved_at,
         is_stale=is_stale,
-        regime=regime,
+        regime=RegimeOut(name=regime.regime, confidence=regime.confidence, reasons=regime.reasons),
         sectors=sectors_out,
         cross_asset=cross_asset_out,
         breadth_1d=breadth_1d,
@@ -149,16 +131,17 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
     )
 
 
-def _empty_dashboard(retrieved_at: datetime | None, sector_total: int) -> DashboardResult:
+def _empty_dashboard(retrieved_at: datetime | None, sector_total: int) -> DashboardResponse:
     empty_breadth = metrics.BreadthResult(positive=0, total=0, ratio=None)
     empty_ratio = {"return_1d": None, "return_5d": None, "return_20d": None}
-    no_data_regime = classify_regime(RegimeMetrics(sector_total=sector_total))
-    return DashboardResult(
+    regime = classify_regime(RegimeMetrics(sector_total=sector_total))
+    return DashboardResponse(
+        as_of=datetime.now(UTC),
         provider=PROVIDER_NAME,
         data_timestamp=None,
         retrieved_at=retrieved_at,
         is_stale=True,
-        regime=no_data_regime,
+        regime=RegimeOut(name=regime.regime, confidence=regime.confidence, reasons=regime.reasons),
         sectors=[],
         cross_asset=[],
         breadth_1d=empty_breadth,
