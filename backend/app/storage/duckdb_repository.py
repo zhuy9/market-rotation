@@ -8,6 +8,7 @@ import duckdb
 import pandas as pd
 
 from app.providers.base import PRICE_COLUMNS
+from app.providers.spdr_flows import FLOW_COLUMNS
 
 DEFAULT_DB_PATH = Path(__file__).parents[2] / "data" / "market.duckdb"
 
@@ -26,6 +27,21 @@ CREATE TABLE IF NOT EXISTS market_prices (
     PRIMARY KEY (symbol, timestamp, interval)
 )
 """
+
+_FLOW_SCHEMA = """
+CREATE TABLE IF NOT EXISTS fund_flows (
+    symbol VARCHAR NOT NULL,
+    date DATE NOT NULL,
+    nav DOUBLE,
+    shares DOUBLE,
+    flow DOUBLE,
+    provider VARCHAR NOT NULL,
+    retrieved_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (symbol, date)
+)
+"""
+
+_FLOW_STORED_COLUMNS = ["symbol", "date", "nav", "shares", "flow", "provider", "retrieved_at"]
 
 _STORED_COLUMNS = [
     "symbol",
@@ -57,6 +73,7 @@ class DuckDBRepository:
             Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = duckdb.connect(str(db_path))
         self._conn.execute(_SCHEMA)
+        self._conn.execute(_FLOW_SCHEMA)
         self._write_lock = Lock()
 
     def upsert_prices(
@@ -129,6 +146,39 @@ class DuckDBRepository:
             .fetchone()
         )
         return row[0] if row and row[0] is not None else None
+
+    def upsert_flows(self, df: pd.DataFrame, provider: str, retrieved_at: datetime) -> int:
+        """Insert/update daily fund flows. Re-running with the same data does not
+        duplicate rows."""
+        if df.empty:
+            return 0
+
+        to_insert = df.copy()
+        to_insert["provider"] = provider
+        to_insert["retrieved_at"] = retrieved_at
+        to_insert = to_insert[_FLOW_STORED_COLUMNS]
+
+        with self._write_lock:
+            cursor = self._conn.cursor()
+            cursor.register("to_insert", to_insert)
+            try:
+                cursor.execute("INSERT OR REPLACE INTO fund_flows SELECT * FROM to_insert")
+            finally:
+                cursor.unregister("to_insert")
+        return len(to_insert)
+
+    def get_flows(self, symbols: list[str], start: datetime, end: datetime) -> pd.DataFrame:
+        if not symbols:
+            return pd.DataFrame(columns=FLOW_COLUMNS)
+
+        placeholders = ",".join("?" * len(symbols))
+        query = f"""
+            SELECT symbol, date, nav, shares, flow
+            FROM fund_flows
+            WHERE symbol IN ({placeholders}) AND date BETWEEN ? AND ?
+            ORDER BY symbol, date
+        """
+        return self._conn.cursor().execute(query, [*symbols, start, end]).fetch_df()
 
     def close(self) -> None:
         self._conn.close()
