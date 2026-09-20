@@ -77,7 +77,7 @@ class MarketService:
         Returns None when the cache is already current and nothing was fetched.
         """
         newest = self._newest_cached()
-        if newest is not None and not self._is_stale(newest):
+        if newest is not None and datetime.now(UTC) - newest <= STALE_AFTER:
             return None
         return self.refresh()
 
@@ -99,10 +99,6 @@ class MarketService:
         if len(cached) < len(self._universe.symbols):
             return None  # a missing symbol counts as "not current"
         return _as_utc(max(cached.values()))
-
-    @staticmethod
-    def _is_stale(newest: datetime) -> bool:
-        return datetime.now(UTC) - newest > STALE_AFTER
 
     def latest_retrieved_at(self) -> datetime | None:
         """When a provider last wrote to the cache (PRD section 13)."""

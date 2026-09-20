@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from app.config.groups import load_groups
-from app.config.universe import load_universe
+from app.config.universe import load_groups, load_universe
 
 
 def test_load_universe_reads_shipped_config():

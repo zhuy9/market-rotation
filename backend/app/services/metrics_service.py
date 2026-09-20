@@ -207,8 +207,6 @@ def clean_number(value: object) -> float | None:
     """Normalize a possibly-NaN/None/pandas scalar into a JSON-safe float or None."""
     if value is None:
         return None
-    if isinstance(value, str):
-        return None
     if pd.isna(value):
         return None
     return float(value)

@@ -26,13 +26,14 @@ const REGIME_STYLES: Record<string, RegimeStyle> = {
   },
 }
 
-const FALLBACK_STYLE: RegimeStyle = {
-  label: 'Unknown',
-  className: 'bg-neutral-500/15 text-neutral-300 border-neutral-500/30',
-}
-
 export function regimeStyle(name: string): RegimeStyle {
-  return REGIME_STYLES[name] ?? { ...FALLBACK_STYLE, label: name }
+  // An unrecognised regime shows its raw name in the neutral style.
+  return (
+    REGIME_STYLES[name] ?? {
+      label: name,
+      className: 'bg-neutral-500/15 text-neutral-300 border-neutral-500/30',
+    }
+  )
 }
 
 export const QUADRANT_COLOR: Record<string, string> = {

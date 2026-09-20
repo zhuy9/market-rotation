@@ -327,8 +327,7 @@ def test_compute_rotation_trail_handles_symbol_with_no_data():
 # --- clean_number ------------------------------------------------------
 
 
-def test_clean_number_normalizes_nan_none_and_strings_to_none():
+def test_clean_number_normalizes_nan_and_none_to_none():
     assert clean_number(None) is None
     assert clean_number(float("nan")) is None
-    assert clean_number("not-a-number") is None
     assert clean_number(0.05) == pytest.approx(0.05)

@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 
 DEFAULT_UNIVERSE_PATH = Path(__file__).parent / "universe.yaml"
+DEFAULT_GROUPS_PATH = Path(__file__).parent / "groups.yaml"
 
 
 @dataclass(frozen=True)
@@ -36,3 +37,8 @@ def load_universe(path: Path = DEFAULT_UNIVERSE_PATH) -> Universe:
         for symbol, name in symbols.items()
     ]
     return Universe(instruments)
+
+
+def load_groups(path: Path = DEFAULT_GROUPS_PATH) -> dict[str, list[str]]:
+    """Defensive/cyclical sector membership, kept in config per PRD section 24."""
+    return yaml.safe_load(path.read_text())

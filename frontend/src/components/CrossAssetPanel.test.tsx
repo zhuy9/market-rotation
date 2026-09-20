@@ -49,10 +49,10 @@ describe('CrossAssetPanel', () => {
     expect(within(item).getByText('+1.20%')).toBeInTheDocument()
   })
 
-  it('falls back to the raw category name for an unrecognised asset class', () => {
+  it('ignores an asset class that is not in the configured list', () => {
     render(<CrossAssetPanel rows={[row({ symbol: 'BTC', category: 'crypto' })]} />)
 
-    expect(screen.queryByText('BTC')).not.toBeInTheDocument() // not in the configured order
+    expect(screen.queryByText('BTC')).not.toBeInTheDocument()
   })
 
   it('shows n/a for an instrument with missing data', () => {

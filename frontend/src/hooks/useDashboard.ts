@@ -4,10 +4,6 @@ import { fetchDashboard, refreshData } from '../api/client'
 
 const DASHBOARD_QUERY_KEY = ['dashboard']
 
-function errorMessage(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback
-}
-
 export function useDashboard() {
   const queryClient = useQueryClient()
   const query = useQuery({ queryKey: DASHBOARD_QUERY_KEY, queryFn: fetchDashboard })
@@ -21,7 +17,7 @@ export function useDashboard() {
   return {
     dashboard: query.data ?? null,
     isLoading: query.isLoading,
-    error: activeError ? errorMessage(activeError, 'Failed to load dashboard') : null,
+    error: activeError ? activeError.message : null,
     isRefreshing: refreshMutation.isPending,
     refresh: () => refreshMutation.mutate(),
   }

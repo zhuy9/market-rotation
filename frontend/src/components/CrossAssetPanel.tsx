@@ -6,7 +6,8 @@ interface CrossAssetPanelProps {
   rows: CrossAssetRow[]
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+// Insertion order is the display order, so one list drives both.
+const CATEGORY_LABELS = {
   equity: 'Equities',
   rates: 'Rates',
   credit: 'Credit',
@@ -15,14 +16,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   volatility: 'Volatility',
 }
 
-const CATEGORY_ORDER = ['equity', 'rates', 'credit', 'commodities', 'currency', 'volatility']
-
 export function CrossAssetPanel({ rows }: CrossAssetPanelProps) {
-  const groups = CATEGORY_ORDER.map((category) => ({
-    category,
-    label: CATEGORY_LABELS[category] ?? category,
-    items: rows.filter((row) => row.category === category),
-  })).filter((group) => group.items.length > 0)
+  const groups = Object.entries(CATEGORY_LABELS)
+    .map(([category, label]) => ({
+      category,
+      label,
+      items: rows.filter((row) => row.category === category),
+    }))
+    .filter((group) => group.items.length > 0)
 
   return (
     <Panel title="Cross-Asset Performance">
