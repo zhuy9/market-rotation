@@ -45,9 +45,26 @@ frontend and business logic never call it directly. See
 
 ## Data source
 
-Default provider: [`yfinance`](https://pypi.org/project/yfinance/) (Yahoo
-Finance, unofficial). No API key required. Data is cached locally in DuckDB
-and refreshed on demand — see [Refresh behavior](docs/data-methodology.md).
+Prices: [`yfinance`](https://pypi.org/project/yfinance/) (Yahoo Finance,
+unofficial). No API key required.
+
+Sector fund flows: State Street's published NAV history for the eleven Select
+Sector SPDRs. Daily net flow is the day-over-day change in shares outstanding
+priced at that day's NAV. ETF shares are created and redeemed only by
+authorized participants, so this is measured creation/redemption activity
+rather than a price-based estimate. Print the current table with:
+
+```bash
+cd backend && uv run python scripts/spdr_flows_report.py
+```
+
+Both sources are cached locally in DuckDB and refreshed on demand — see
+[Refresh behavior](docs/data-methodology.md). Stop the backend first: DuckDB
+allows one writer, so the report cannot open the cache while the API holds it.
+
+A [weekly canary](.github/workflows/spdr-canary.yml) fails if State Street
+moves or reshapes those files. No fund data is redistributed from this
+repository.
 
 ## Local setup
 
