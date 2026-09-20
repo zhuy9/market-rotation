@@ -105,6 +105,8 @@ export function SectorFlowChart({ flows }: SectorFlowChartProps) {
                   borderRadius: 8,
                   fontSize: 12,
                 }}
+                itemStyle={{ color: '#e5e5e5' }}
+                labelStyle={{ color: '#e5e5e5' }}
                 formatter={(value) => [formatFlow(Number(value)), 'Net flow'] as [string, string]}
                 labelFormatter={(label) =>
                   data.find((row) => row.symbol === label)?.name ?? String(label)
