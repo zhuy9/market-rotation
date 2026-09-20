@@ -6,11 +6,13 @@ interface RegimeCardProps {
   regime: Regime
 }
 
+const METHODOLOGY = `Deterministic, rule-based classification — no AI. Rules are checked in a fixed priority order and the first match wins: 1) Broad Risk-Off, 2) Defensive Rotation, 3) Broad Risk-On, 4) Internal Rotation, 5) Mixed (fallback, none matched). Each rule looks at SPY 5-day return, sector breadth and dispersion, and cross-asset confirmations (credit, gold, Treasuries, VIX). Full thresholds: docs/data-methodology.md.`
+
 export function RegimeCard({ regime }: RegimeCardProps) {
   const style = regimeStyle(regime.name)
 
   return (
-    <Panel title="Market Regime">
+    <Panel title="Market Regime" titleTooltip={METHODOLOGY}>
       <div className="flex flex-wrap items-center gap-3">
         <span className={`rounded-full border px-3 py-1 text-sm font-semibold ${style.className}`}>
           {style.label}

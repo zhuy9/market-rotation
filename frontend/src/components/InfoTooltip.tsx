@@ -1,8 +1,15 @@
 interface InfoTooltipProps {
   text: string
+  width?: string
+  placement?: 'top' | 'bottom'
 }
 
-export function InfoTooltip({ text }: InfoTooltipProps) {
+const PLACEMENT_CLASSES: Record<'top' | 'bottom', string> = {
+  top: 'bottom-full mb-1.5',
+  bottom: 'top-full mt-1.5',
+}
+
+export function InfoTooltip({ text, width = 'w-48', placement = 'top' }: InfoTooltipProps) {
   return (
     <span className="group relative ml-1 inline-flex cursor-help items-center align-middle">
       <span
@@ -13,7 +20,7 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
       </span>
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-48 -translate-x-1/2 rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1.5 text-xs font-normal text-neutral-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+        className={`pointer-events-none absolute left-1/2 z-10 ${width} -translate-x-1/2 rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1.5 text-xs font-normal normal-case text-neutral-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 ${PLACEMENT_CLASSES[placement]}`}
       >
         {text}
       </span>
