@@ -14,8 +14,9 @@ across sector ETFs, benchmarks, bonds, credit, commodities, USD, and VIX.
 
 - Backend: Python 3.12+, FastAPI, pandas, numpy, `yfinance`, DuckDB,
   Pydantic, pytest, Ruff. Managed with `uv`.
-- Frontend: React + TypeScript + Vite, shadcn/ui, Tailwind, Recharts
-  (Plotly only if it meaningfully simplifies the rotation scatter chart).
+- Frontend: React + TypeScript + Vite, Tailwind, hand-styled components,
+  Recharts (Plotly only if it meaningfully simplifies the rotation scatter
+  chart).
 - Storage: DuckDB, local only, never committed.
 
 ## Commands
