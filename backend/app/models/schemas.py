@@ -73,6 +73,23 @@ class RatiosOut(BaseModel):
     hyg_lqd: RatioOut
 
 
+class SectorFlowOut(BaseModel):
+    symbol: str
+    name: str
+    # Keyed by window label ("5D"), in dollars. None where the window has no
+    # trustworthy flow, so the UI can tell "no data" from "zero net flow".
+    flows: dict[str, float | None]
+
+
+class FlowsResponse(BaseModel):
+    """Empty `sectors` means the local cache has no flows yet, which is the
+    normal state until scripts/spdr_flows_report.py has been run."""
+
+    as_of: datetime | None
+    windows: list[int]
+    sectors: list[SectorFlowOut]
+
+
 class DashboardResponse(BaseModel):
     as_of: datetime
     provider: str

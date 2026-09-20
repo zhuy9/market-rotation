@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import dashboard, health, refresh, universe
+from app.api import dashboard, flows, health, refresh, universe
 from app.deps import get_market_service
 
 logger = logging.getLogger(__name__)
@@ -48,3 +48,4 @@ app.include_router(health.router, prefix="/api")
 app.include_router(universe.router, prefix="/api")
 app.include_router(refresh.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
+app.include_router(flows.router, prefix="/api")

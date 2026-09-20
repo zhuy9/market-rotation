@@ -14,5 +14,10 @@ def get_universe() -> Universe:
 
 
 @lru_cache
+def get_repository() -> DuckDBRepository:
+    return DuckDBRepository()
+
+
+@lru_cache
 def get_market_service() -> MarketService:
-    return MarketService(YFinanceMarketDataProvider(), DuckDBRepository(), get_universe())
+    return MarketService(YFinanceMarketDataProvider(), get_repository(), get_universe())

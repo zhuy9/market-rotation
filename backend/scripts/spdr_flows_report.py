@@ -17,13 +17,12 @@ import duckdb
 import pandas as pd
 
 from app.config.universe import load_universe
-from app.services.flow_service import refresh_flows
+from app.services.flow_service import FLOW_WINDOWS, refresh_flows
 from app.storage.duckdb_repository import DuckDBRepository
 
-# Trailing-session horizons. Spaced tighter at the short end because adjacent
-# cumulative windows differ by exactly one session, so a full 1..20 ladder would
-# be twenty near-identical columns. Edit this tuple to change the table.
-WINDOWS = (1, 2, 3, 5, 10, 15, 20)
+# Shared with the /api/flows endpoint so the table and the dashboard cannot
+# drift apart.
+WINDOWS = FLOW_WINDOWS
 
 _COL = 9
 _LABELS = 30

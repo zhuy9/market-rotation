@@ -7,10 +7,20 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
+from app.config.universe import Universe
+from app.models.schemas import FlowsResponse, SectorFlowOut
 from app.providers import spdr_flows
+from app.services.metrics_service import clean_number
 from app.storage.duckdb_repository import DuckDBRepository
 
 PROVIDER_NAME = "ssga"
+
+# Trailing-session horizons. Spaced tighter at the short end because adjacent
+# cumulative windows differ by exactly one session, so a full 1..20 ladder would
+# be twenty near-identical columns.
+FLOW_WINDOWS = (1, 2, 3, 5, 10, 15, 20)
+
+_EPOCH = datetime(2000, 1, 1)
 
 
 @dataclass(frozen=True)
@@ -46,4 +56,36 @@ def refresh_flows(repository: DuckDBRepository, symbols: list[str]) -> FlowRefre
 
     return FlowRefreshResult(
         updated_symbols=len(frames), failed_symbols=failed, rows=rows, as_of=now
+    )
+
+
+def build_flows(repository: DuckDBRepository, universe: Universe) -> FlowsResponse:
+    """Cumulative net flow per sector over each trailing window."""
+    sectors = [i for i in universe.instruments if i.category == "sectors"]
+    stored = repository.get_flows([i.symbol for i in sectors], _EPOCH, datetime.now(UTC))
+
+    if stored.empty:
+        return FlowsResponse(as_of=None, windows=list(FLOW_WINDOWS), sectors=[])
+
+    rows = []
+    for instrument in sectors:
+        flows = stored.loc[stored["symbol"] == instrument.symbol, "flow"]
+        if flows.empty:
+            continue
+        rows.append(
+            SectorFlowOut(
+                symbol=instrument.symbol,
+                name=instrument.name,
+                # min_count keeps an all-unknown window as None instead of
+                # reporting a fabricated zero.
+                flows={
+                    f"{w}D": clean_number(flows.tail(w).sum(min_count=1)) for w in FLOW_WINDOWS
+                },
+            )
+        )
+
+    return FlowsResponse(
+        as_of=pd.to_datetime(stored["date"]).max(),
+        windows=list(FLOW_WINDOWS),
+        sectors=rows,
     )
