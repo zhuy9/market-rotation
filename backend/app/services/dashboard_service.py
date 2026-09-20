@@ -66,16 +66,12 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
         sector_returns_5d, groups["defensive"], groups["cyclical"]
     )
 
-    defensive_vs_spy = {
-        symbol: metrics.relative_return(_return(returns_table, symbol, "return_5d"), spy_5d)
-        for symbol in groups["defensive"]
-    }
-    defensive_outperform_count = sum(
-        1 for v in defensive_vs_spy.values() if v is not None and v > 0
-    )
-
     def vs_spy_5d(symbol: str) -> float | None:
+        """How far `symbol` out- or under-performed SPY over five sessions."""
         return metrics.relative_return(_return(returns_table, symbol, "return_5d"), spy_5d)
+
+    defensive_vs_spy = [vs_spy_5d(symbol) for symbol in groups["defensive"]]
+    defensive_outperform_count = sum(1 for v in defensive_vs_spy if v is not None and v > 0)
 
     regime = classify_regime(
         RegimeMetrics(
