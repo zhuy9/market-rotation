@@ -34,17 +34,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Market Rotation Dashboard API", lifespan=lifespan)
 
-# The frontend is always served from a localhost port, but not always 5173 --
-# Vite moves to 5174+ when the default is taken, and pinning one port made the
-# dashboard fail with nothing but a CORS error in the browser console. Match any
-# localhost port instead. This stays a local-only tool: the API is
-# unauthenticated and serves public market data, and a remote origin such as
-# https://evil.example still does not match.
-LOCAL_ORIGIN_PATTERN = r"http://(localhost|127\.0\.0\.1)(:\d+)?$"
-
+# Only the documented dev origin. Run one frontend at a time on 5173: if Vite
+# moves to another port because 5173 is taken, its API calls are blocked and the
+# dashboard will sit on "Loading dashboard…" with a CORS error in the console.
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=LOCAL_ORIGIN_PATTERN,
+    allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
