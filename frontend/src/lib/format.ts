@@ -33,3 +33,15 @@ export function formatRetrievedAt(value: string | null): string {
     timeZoneName: 'short',
   })
 }
+
+// Flows arrive in dollars and run from single millions to several billion, so
+// the unit is chosen per value rather than fixed.
+export function formatFlow(value: number | null): string {
+  if (value === null) return 'n/a'
+  const millions = value / 1e6
+  const sign = millions >= 0 ? '+' : '-'
+  const magnitude = Math.abs(millions)
+  return magnitude >= 1000
+    ? `${sign}$${(magnitude / 1000).toFixed(2)}B`
+    : `${sign}$${magnitude.toFixed(0)}M`
+}

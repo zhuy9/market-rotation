@@ -1,4 +1,4 @@
-import type { Dashboard, RefreshResult } from './types'
+import type { Dashboard, Flows, RefreshResult } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -12,6 +12,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function fetchDashboard(): Promise<Dashboard> {
   return request<Dashboard>('/api/dashboard')
+}
+
+export function fetchFlows(): Promise<Flows> {
+  return request<Flows>('/api/flows')
 }
 
 export function refreshData(): Promise<RefreshResult> {

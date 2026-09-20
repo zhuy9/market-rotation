@@ -73,3 +73,20 @@ export interface RefreshResult {
   failed_symbols: string[]
   as_of: string
 }
+
+/** Net creation/redemption flow per sector, keyed by window label ("5D").
+ *  A null value means the window has no trustworthy flow, which is different
+ *  from a net flow of zero. */
+export interface SectorFlow {
+  symbol: string
+  name: string
+  flows: Record<string, number | null>
+}
+
+/** An empty `sectors` list is the normal state until the flow cache has been
+ *  populated, and means the dashboard should omit the panel entirely. */
+export interface Flows {
+  as_of: string | null
+  windows: number[]
+  sectors: SectorFlow[]
+}

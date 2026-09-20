@@ -7,8 +7,10 @@ import { DataQualityBanner } from './components/DataQualityBanner'
 import { MarketInternalsPanel } from './components/MarketInternalsPanel'
 import { RegimeCard } from './components/RegimeCard'
 import { RelativeRotationChart } from './components/RelativeRotationChart'
+import { SectorFlowChart } from './components/SectorFlowChart'
 import { SectorHeatmap } from './components/SectorHeatmap'
 import { useDashboard } from './hooks/useDashboard'
+import { useFlows } from './hooks/useFlows'
 
 function CenteredMessage({ children }: { children: ReactNode }) {
   return (
@@ -20,6 +22,7 @@ function CenteredMessage({ children }: { children: ReactNode }) {
 
 function App() {
   const { dashboard, isLoading, error, isRefreshing, refresh } = useDashboard()
+  const { flows, error: flowError } = useFlows()
 
   if (isLoading) {
     return <CenteredMessage>Loading dashboard…</CenteredMessage>
@@ -43,13 +46,16 @@ function App() {
           onRefresh={refresh}
           isRefreshing={isRefreshing}
         />
-        {error && <p className="text-sm text-rose-400">{error}</p>}
+        {(error || flowError) && <p className="text-sm text-rose-400">{error ?? flowError}</p>}
         <DataQualityBanner isStale={dashboard.is_stale} warnings={dashboard.warnings} />
         <RegimeCard regime={dashboard.regime} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <SectorHeatmap sectors={dashboard.sectors} />
           <RelativeRotationChart sectors={dashboard.sectors} />
         </div>
+        {/* Flows are cached separately and are often absent, so the panel
+            appears only once there is something to draw. */}
+        {flows && flows.sectors.length > 0 && <SectorFlowChart flows={flows} />}
         <CrossAssetPanel rows={dashboard.cross_asset} />
         <MarketInternalsPanel
           breadth5d={dashboard.breadth_5d}

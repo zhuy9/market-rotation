@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as client from './api/client'
-import type { Dashboard } from './api/types'
+import type { Dashboard, Flows } from './api/types'
 import App from './App'
 
 function buildDashboard(overrides: Partial<Dashboard> = {}): Dashboard {
@@ -30,6 +30,17 @@ function buildDashboard(overrides: Partial<Dashboard> = {}): Dashboard {
   }
 }
 
+function buildFlows(overrides: Partial<Flows> = {}): Flows {
+  return {
+    as_of: '2026-09-17T00:00:00',
+    windows: [1, 5, 20],
+    sectors: [
+      { symbol: 'XLK', name: 'Technology', flows: { '1D': -103e6, '5D': -282e6, '20D': -692e6 } },
+    ],
+    ...overrides,
+  }
+}
+
 function renderApp() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -40,6 +51,12 @@ function renderApp() {
 }
 
 describe('App', () => {
+  // Flows are a separate query. Default them to empty so every other test
+  // exercises the common case of an unpopulated flow cache.
+  beforeEach(() => {
+    vi.spyOn(client, 'fetchFlows').mockResolvedValue(buildFlows({ as_of: null, sectors: [] }))
+  })
+
   it('shows a loading state before the dashboard resolves', () => {
     vi.spyOn(client, 'fetchDashboard').mockReturnValue(new Promise(() => {}))
 
@@ -99,5 +116,34 @@ describe('App', () => {
 
     expect(await screen.findByText(/refresh failed with status 503/i)).toBeInTheDocument()
     expect(screen.getByText('Internal Rotation')).toBeInTheDocument()
+  })
+
+  it('omits the flow panel entirely when no flows are cached', async () => {
+    vi.spyOn(client, 'fetchDashboard').mockResolvedValue(buildDashboard())
+
+    renderApp()
+    await screen.findByText(/Sector Heatmap/i)
+
+    // An unpopulated flow cache is the normal state, not an error to report.
+    expect(screen.queryByText(/Sector Fund Flows/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument()
+  })
+
+  it('renders the flow panel once flows are cached', async () => {
+    vi.spyOn(client, 'fetchDashboard').mockResolvedValue(buildDashboard())
+    vi.spyOn(client, 'fetchFlows').mockResolvedValue(buildFlows())
+
+    renderApp()
+
+    expect(await screen.findByText(/Sector Fund Flows/i)).toBeInTheDocument()
+  })
+
+  it('surfaces a flow fetch failure rather than passing it off as no data', async () => {
+    vi.spyOn(client, 'fetchDashboard').mockResolvedValue(buildDashboard())
+    vi.spyOn(client, 'fetchFlows').mockRejectedValue(new Error('/api/flows failed with status 500'))
+
+    renderApp()
+
+    expect(await screen.findByText(/\/api\/flows failed with status 500/)).toBeInTheDocument()
   })
 })
