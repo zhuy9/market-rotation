@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  ReferenceLine,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 import type { SectorRow } from '../api/types'
 import { QUADRANT_COLOR } from '../lib/regime'
@@ -51,8 +59,8 @@ function sectorPath(sector: SectorRow, sessions: number): PlotPoint[] {
   if (sector.vs_spy_20d === null || sector.vs_spy_5d === null) return []
   const quadrant = sector.quadrant ?? 'LAGGING'
 
-  const historical: PlotPoint[] = sector.trail
-    .slice(-sessions)
+  // sessions=0 must yield no trail, not slice(-0) === slice(0) === the whole array.
+  const historical: PlotPoint[] = (sessions > 0 ? sector.trail.slice(-sessions) : [])
     .filter((p) => p.x !== null && p.y !== null)
     .map((p) => ({
       symbol: sector.symbol,
@@ -88,7 +96,7 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
         <input
           id="trail-sessions"
           type="range"
-          min={1}
+          min={0}
           max={MAX_TRAIL_SESSIONS}
           step={1}
           value={trailSessions}
