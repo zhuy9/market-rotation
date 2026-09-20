@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { CrossAssetPanel } from './components/CrossAssetPanel'
+import { DashboardFooter } from './components/DashboardFooter'
 import { DashboardHeader } from './components/DashboardHeader'
 import { DataQualityBanner } from './components/DataQualityBanner'
 import { MarketInternalsPanel } from './components/MarketInternalsPanel'
@@ -57,6 +58,7 @@ function App() {
           hygLqd5d={dashboard.ratios.hyg_lqd.return_5d}
           defensiveSpread5d={dashboard.defensive_spread_5d}
         />
+        <DashboardFooter />
       </div>
     </div>
   )
