@@ -65,10 +65,13 @@ npm install
 npm run dev                            # or, from the repo root: npm run dev:frontend
 ```
 
-Open http://localhost:5173. The database starts empty — click
-**Refresh Data** (or `curl -X POST http://localhost:8000/api/data/refresh`)
-to download ~400 days of history for the tracked universe, then the regime
-and metrics appear. No credentials are required at any step.
+Open http://localhost:5173. The database starts empty, so the first backend
+start downloads ~400 days of history for the tracked universe — give it a few
+seconds before the regime and metrics appear. After that, startup only fetches
+the sessions it is missing. **Refresh Data** (or
+`curl -X POST http://localhost:8000/api/data/refresh`) forces an update at any
+time, rate-limited to one call per 60 seconds. No credentials are required at
+any step.
 
 ## Development commands
 
@@ -78,11 +81,12 @@ cd backend
 uv run ruff check .
 uv run pytest --cov=app --cov-report=term-missing
 
-# frontend
+# frontend — same sequence CI runs
 cd frontend
+npm run format         # prettier --check
 npm run lint
 npm run type-check
-npm test
+npm run test:coverage  # fails under 80% coverage
 npm run build
 ```
 

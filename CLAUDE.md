@@ -23,9 +23,9 @@ across sector ETFs, benchmarks, bonds, credit, commodities, USD, and VIX.
 
 ```bash
 cd backend && uv sync && uv run uvicorn app.main:app --reload
-cd backend && ruff check . && uv run pytest
+cd backend && uv run ruff check . && uv run pytest
 cd frontend && npm install && npm run dev
-cd frontend && npm run lint && npm run type-check && npm test && npm run build
+cd frontend && npm run format && npm run lint && npm run type-check && npm run test:coverage && npm run build
 ```
 
 ## Milestone rules
