@@ -14,6 +14,7 @@ from app.services.market_service import PROVIDER_NAME, MarketService
 from app.services.regime_service import RegimeMetrics, RegimeResult, classify_regime
 
 STALE_AFTER = timedelta(days=4)  # covers a long weekend/holiday plus a day of buffer
+TRAIL_LENGTH = 5  # PRD section 17: show the previous five daily rotation positions
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
 
     sector_table = metrics.compute_sector_table(prices, sector_symbols, "SPY")
     returns_table = metrics.compute_returns_table(prices).set_index("symbol")
+    trail = metrics.compute_rotation_trail(prices, sector_symbols, "SPY", TRAIL_LENGTH)
 
     sector_returns_1d = _column_as_dict(sector_table, "return_1d")
     sector_returns_5d = _column_as_dict(sector_table, "return_5d")
@@ -102,6 +104,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
             "vs_spy_5d": _clean(row["vs_spy_5d"]),
             "vs_spy_20d": _clean(row["vs_spy_20d"]),
             "quadrant": row["quadrant"] if isinstance(row["quadrant"], str) else None,
+            "trail": trail.get(row["symbol"], []),
         }
         for _, row in sector_table.iterrows()
     ]
@@ -199,14 +202,9 @@ def _return(returns_table: pd.DataFrame, symbol: str, column: str) -> float | No
     return _clean(returns_table.loc[symbol, column])
 
 
-def _clean(value: object) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, str):
-        return None
-    if pd.isna(value):
-        return None
-    return float(value)
+# Shared with the trail calculation in metrics_service; kept as a short alias
+# since this module calls it a dozen times.
+_clean = metrics.clean_number
 
 
 def _clean_dict(values: dict[str, float | None]) -> dict[str, float | None]:

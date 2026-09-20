@@ -14,6 +14,7 @@ function makeSector(overrides: Partial<SectorRow>): SectorRow {
     vs_spy_5d: 0.01,
     vs_spy_20d: 0.01,
     quadrant: 'LEADING',
+    trail: [],
     ...overrides,
   }
 }

@@ -4,11 +4,12 @@ import type { SectorRow } from '../api/types'
 import { QUADRANT_COLOR } from '../lib/regime'
 import { Panel } from './Panel'
 
-interface RotationPoint {
+interface PlotPoint {
   symbol: string
   x: number
   y: number
   quadrant: string
+  isCurrent: boolean
 }
 
 interface RelativeRotationChartProps {
@@ -18,12 +19,16 @@ interface RelativeRotationChartProps {
 interface DotProps {
   cx?: number
   cy?: number
-  payload?: RotationPoint
+  payload?: PlotPoint
 }
 
 function RotationDot({ cx, cy, payload }: DotProps) {
   if (cx === undefined || cy === undefined || !payload) return null
   const color = QUADRANT_COLOR[payload.quadrant] ?? '#a3a3a3'
+
+  if (!payload.isCurrent) {
+    return <circle cx={cx} cy={cy} r={1.5} fill={color} fillOpacity={0.5} />
+  }
   return (
     <g>
       <circle cx={cx} cy={cy} r={4} fill={color} />
@@ -34,18 +39,40 @@ function RotationDot({ cx, cy, payload }: DotProps) {
   )
 }
 
-export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
-  const points: RotationPoint[] = sectors
-    .filter((s) => s.vs_spy_20d !== null && s.vs_spy_5d !== null)
-    .map((s) => ({
-      symbol: s.symbol,
-      x: (s.vs_spy_20d as number) * 100,
-      y: (s.vs_spy_5d as number) * 100,
-      quadrant: s.quadrant ?? 'LAGGING',
+// Trail (previous sessions, oldest first) + current position, as one path Recharts
+// can connect with a line — PRD section 17's optional "faded trail".
+function sectorPath(sector: SectorRow): PlotPoint[] {
+  if (sector.vs_spy_20d === null || sector.vs_spy_5d === null) return []
+  const quadrant = sector.quadrant ?? 'LAGGING'
+
+  const historical: PlotPoint[] = sector.trail
+    .filter((p) => p.x !== null && p.y !== null)
+    .map((p) => ({
+      symbol: sector.symbol,
+      x: (p.x as number) * 100,
+      y: (p.y as number) * 100,
+      quadrant,
+      isCurrent: false,
     }))
 
+  const current: PlotPoint = {
+    symbol: sector.symbol,
+    x: sector.vs_spy_20d * 100,
+    y: sector.vs_spy_5d * 100,
+    quadrant,
+    isCurrent: true,
+  }
+  return [...historical, current]
+}
+
+export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
+  const plottable = sectors.filter((s) => s.vs_spy_20d !== null && s.vs_spy_5d !== null)
+
   return (
-    <Panel title="Relative Rotation">
+    <Panel
+      title="Relative Rotation"
+      titleTooltip="Each sector's last 5 sessions, connected by a faded trail to its current position (the labeled dot)."
+    >
       <div className="mb-1 grid grid-cols-2 px-2 text-[10px] tracking-wide text-neutral-600 uppercase">
         <span className="text-left">Improving</span>
         <span className="text-right">Leading</span>
@@ -75,7 +102,19 @@ export function RelativeRotationChart({ sectors }: RelativeRotationChartProps) {
             labelStyle={{ color: '#e5e5e5' }}
             formatter={(value) => `${Number(value).toFixed(2)}%`}
           />
-          <Scatter data={points} shape={RotationDot} />
+          {plottable.map((sector) => (
+            <Scatter
+              key={sector.symbol}
+              data={sectorPath(sector)}
+              shape={RotationDot}
+              line={{
+                stroke: QUADRANT_COLOR[sector.quadrant ?? 'LAGGING'] ?? '#a3a3a3',
+                strokeWidth: 1.25,
+                strokeOpacity: 0.5,
+              }}
+              isAnimationActive={false}
+            />
+          ))}
         </ScatterChart>
       </ResponsiveContainer>
       <div className="mt-1 grid grid-cols-2 px-2 text-[10px] tracking-wide text-neutral-600 uppercase">

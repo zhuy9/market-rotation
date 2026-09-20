@@ -149,6 +149,52 @@ def compute_sector_table(
     return pd.DataFrame(rows)
 
 
+def compute_rotation_trail(
+    prices: pd.DataFrame,
+    sector_symbols: list[str],
+    benchmark_symbol: str,
+    trail_length: int = 5,
+) -> dict[str, list[dict[str, float | None]]]:
+    """Rotation coordinates for the `trail_length` sessions before the latest one,
+    oldest first, per sector. Pair with compute_sector_table's current x/y to draw
+    a fading trail ending at today's position (PRD section 17, optional trail).
+    """
+    timestamps = sorted(prices["timestamp"].unique())
+    trail: dict[str, list[dict[str, float | None]]] = {symbol: [] for symbol in sector_symbols}
+
+    for offset in range(trail_length, 0, -1):
+        cutoff_index = len(timestamps) - 1 - offset
+        if cutoff_index < 0:
+            for symbol in sector_symbols:
+                trail[symbol].append({"x": None, "y": None})
+            continue
+
+        window = prices[prices["timestamp"] <= timestamps[cutoff_index]]
+        table = compute_sector_table(window, sector_symbols, benchmark_symbol).set_index("symbol")
+        for symbol in sector_symbols:
+            if symbol in table.index:
+                point = {
+                    "x": clean_number(table.loc[symbol, "vs_spy_20d"]),
+                    "y": clean_number(table.loc[symbol, "vs_spy_5d"]),
+                }
+            else:
+                point = {"x": None, "y": None}
+            trail[symbol].append(point)
+
+    return trail
+
+
+def clean_number(value: object) -> float | None:
+    """Normalize a possibly-NaN/None/pandas scalar into a JSON-safe float or None."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return None
+    if pd.isna(value):
+        return None
+    return float(value)
+
+
 def _closes_by_timestamp(prices: pd.DataFrame, symbol: str) -> pd.Series:
     subset = prices[prices["symbol"] == symbol].sort_values("timestamp")
     return subset.set_index("timestamp")["close"]

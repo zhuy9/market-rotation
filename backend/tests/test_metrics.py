@@ -7,9 +7,11 @@ import pytest
 
 from app.services.metrics_service import (
     classify_quadrant,
+    clean_number,
     compute_ratio_returns,
     compute_return,
     compute_returns_table,
+    compute_rotation_trail,
     compute_sector_table,
     defensive_cyclical_spread,
     group_mean_return,
@@ -233,3 +235,65 @@ def test_compute_sector_table_shape_and_quadrants():
     # (pandas promotes a column's None entries to NaN once mixed with values.)
     assert pd.isna(table.loc["XLRE", "return_1d"])
     assert pd.isna(table.loc["XLRE", "quadrant"])
+
+
+# --- rotation trail (PRD section 17, "faded trail") ------------------------
+
+
+def test_compute_rotation_trail_matches_manual_calculation_with_flat_benchmark():
+    # SPY flat at 100 means its return is always 0, so vs_spy_X == the
+    # sector's own return_X exactly at every cutoff -- easy to verify.
+    sessions = 30
+    ramp = [float(100 + i) for i in range(sessions)]
+    prices = pd.concat(
+        [_price_frame("XLE", ramp), _price_frame("SPY", [100.0] * sessions)],
+        ignore_index=True,
+    )
+
+    trail = compute_rotation_trail(prices, ["XLE"], "SPY", trail_length=5)
+
+    assert list(trail.keys()) == ["XLE"]
+    assert len(trail["XLE"]) == 5
+
+    closes = pd.Series(ramp)
+    expected_cutoffs = [24, 25, 26, 27, 28]  # oldest first; today is index 29
+    for point, cutoff in zip(trail["XLE"], expected_cutoffs, strict=True):
+        window = closes.iloc[: cutoff + 1]
+        assert point["x"] == pytest.approx(compute_return(window, 20))
+        assert point["y"] == pytest.approx(compute_return(window, 5))
+
+
+def test_compute_rotation_trail_pads_with_none_when_history_is_too_short():
+    # Only 3 sessions total with a 5-point trail: the two oldest requested
+    # cutoffs don't exist yet at all (negative index), and even the cutoffs
+    # that do exist have too few rows for either return -- every point
+    # should come back None rather than crashing either way.
+    short_ramp = [100.0, 101.0, 102.0]
+    prices = pd.concat(
+        [_price_frame("XLE", short_ramp), _price_frame("SPY", [100.0] * 3)],
+        ignore_index=True,
+    )
+
+    trail = compute_rotation_trail(prices, ["XLE"], "SPY", trail_length=5)
+
+    assert len(trail["XLE"]) == 5
+    assert all(point["x"] is None and point["y"] is None for point in trail["XLE"])
+
+
+def test_compute_rotation_trail_handles_symbol_with_no_data():
+    prices = _price_frame("SPY", RAMP)
+
+    trail = compute_rotation_trail(prices, ["XLRE"], "SPY", trail_length=5)
+
+    assert len(trail["XLRE"]) == 5
+    assert all(point == {"x": None, "y": None} for point in trail["XLRE"])
+
+
+# --- clean_number ------------------------------------------------------
+
+
+def test_clean_number_normalizes_nan_none_and_strings_to_none():
+    assert clean_number(None) is None
+    assert clean_number(float("nan")) is None
+    assert clean_number("not-a-number") is None
+    assert clean_number(0.05) == pytest.approx(0.05)

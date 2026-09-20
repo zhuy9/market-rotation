@@ -10,6 +10,11 @@ export interface Breadth {
   ratio: number | null
 }
 
+export interface RotationPoint {
+  x: number | null
+  y: number | null
+}
+
 export interface SectorRow {
   symbol: string
   name: string
@@ -19,6 +24,7 @@ export interface SectorRow {
   vs_spy_5d: number | null
   vs_spy_20d: number | null
   quadrant: string | null
+  trail: RotationPoint[]
 }
 
 export interface CrossAssetRow {

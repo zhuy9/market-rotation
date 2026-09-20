@@ -30,6 +30,11 @@ class BreadthOut(BaseModel):
     ratio: float | None
 
 
+class RotationPointOut(BaseModel):
+    x: float | None
+    y: float | None
+
+
 class SectorRowOut(BaseModel):
     symbol: str
     name: str
@@ -39,6 +44,7 @@ class SectorRowOut(BaseModel):
     vs_spy_5d: float | None
     vs_spy_20d: float | None
     quadrant: str | None
+    trail: list[RotationPointOut]
 
 
 class CrossAssetRowOut(BaseModel):
