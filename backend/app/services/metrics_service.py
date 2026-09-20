@@ -173,6 +173,11 @@ def compute_rotation_trail(
     oldest first, per sector. Pair with compute_sector_table's current x/y to draw
     a fading trail ending at today's position (PRD section 17, optional trail).
     """
+    # Narrow the frame once. compute_sector_table only reads the sectors and the
+    # benchmark, but recomputes returns for every symbol it is handed -- and it
+    # runs once per trail point, so the whole universe would otherwise be
+    # recomputed `trail_length` times over.
+    prices = prices[prices["symbol"].isin([*sector_symbols, benchmark_symbol])]
     timestamps = sorted(prices["timestamp"].unique())
     trail: dict[str, list[dict[str, float | None]]] = {symbol: [] for symbol in sector_symbols}
 

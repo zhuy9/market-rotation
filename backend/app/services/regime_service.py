@@ -24,24 +24,25 @@ class RegimeMetrics:
     """Pre-computed metric snapshot (see app.services.metrics_service) that the
     regime rules are evaluated against. Any field may be None when the
     underlying instrument's data is missing — rules treat that as "condition
-    not met" rather than raising.
+    not met" rather than raising. That is also why every metric defaults to
+    "no data": an empty cache only has to supply `sector_total`.
     """
 
-    spy_return_5d: float | None
-    sector_positive_count_5d: int
-    sector_negative_count_5d: int
     sector_total: int  # how many sectors the universe config defines, not how many had data
-    sector_dispersion_5d: float | None
-    rsp_vs_spy_5d: float | None
-    hyg_vs_lqd_5d: float | None
-    defensive_spread_5d: float | None
-    defensive_outperform_count: int
-    qqq_vs_spy_5d: float | None
-    iwm_vs_spy_5d: float | None
-    gld_vs_spy_5d: float | None
-    ief_vs_spy_5d: float | None
-    tlt_vs_spy_5d: float | None
-    vix_return_5d: float | None
+    spy_return_5d: float | None = None
+    sector_positive_count_5d: int = 0
+    sector_negative_count_5d: int = 0
+    sector_dispersion_5d: float | None = None
+    rsp_vs_spy_5d: float | None = None
+    hyg_vs_lqd_5d: float | None = None
+    defensive_spread_5d: float | None = None
+    defensive_outperform_count: int = 0
+    qqq_vs_spy_5d: float | None = None
+    iwm_vs_spy_5d: float | None = None
+    gld_vs_spy_5d: float | None = None
+    ief_vs_spy_5d: float | None = None
+    tlt_vs_spy_5d: float | None = None
+    vix_return_5d: float | None = None
 
 
 @dataclass(frozen=True)

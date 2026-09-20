@@ -70,21 +70,15 @@ def test_broad_risk_off_wins_over_overlapping_defensive_rotation_conditions():
 
 def test_missing_benchmark_data_does_not_crash_and_fails_the_condition():
     metrics = RegimeMetrics(
+        sector_total=11,
         spy_return_5d=0.015,
         sector_positive_count_5d=8,
         sector_negative_count_5d=3,
-        sector_total=11,
         sector_dispersion_5d=0.01,
-        rsp_vs_spy_5d=None,  # RSP data missing
         hyg_vs_lqd_5d=0.0,
-        defensive_spread_5d=None,
-        defensive_outperform_count=0,
         qqq_vs_spy_5d=0.01,
         iwm_vs_spy_5d=0.01,
-        gld_vs_spy_5d=None,
-        ief_vs_spy_5d=None,
-        tlt_vs_spy_5d=None,
-        vix_return_5d=None,
+        # rsp_vs_spy_5d is deliberately left unset: RSP data is missing.
     )
 
     result = classify_regime(metrics)
@@ -96,23 +90,7 @@ def test_missing_benchmark_data_does_not_crash_and_fails_the_condition():
 
 
 def test_all_none_metrics_produce_mixed_without_raising():
-    metrics = RegimeMetrics(
-        spy_return_5d=None,
-        sector_positive_count_5d=0,
-        sector_negative_count_5d=0,
-        sector_total=11,
-        sector_dispersion_5d=None,
-        rsp_vs_spy_5d=None,
-        hyg_vs_lqd_5d=None,
-        defensive_spread_5d=None,
-        defensive_outperform_count=0,
-        qqq_vs_spy_5d=None,
-        iwm_vs_spy_5d=None,
-        gld_vs_spy_5d=None,
-        ief_vs_spy_5d=None,
-        tlt_vs_spy_5d=None,
-        vix_return_5d=None,
-    )
+    metrics = RegimeMetrics(sector_total=11)  # every metric defaults to "no data"
 
     result = classify_regime(metrics)
 

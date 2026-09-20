@@ -11,6 +11,7 @@ from app.config.groups import load_groups
 from app.config.universe import Universe
 from app.services import metrics_service as metrics
 from app.services.market_service import PROVIDER_NAME, STALE_AFTER, MarketService
+from app.services.metrics_service import clean_number as _clean
 from app.services.regime_service import RegimeMetrics, RegimeResult, classify_regime
 
 TRAIL_LENGTH = 5  # PRD section 17: show the previous five daily rotation positions
@@ -155,25 +156,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
 def _empty_dashboard(retrieved_at: datetime | None, sector_total: int) -> DashboardResult:
     empty_breadth = metrics.BreadthResult(positive=0, total=0, ratio=None)
     empty_ratio = {"return_1d": None, "return_5d": None, "return_20d": None}
-    no_data_regime = classify_regime(
-        RegimeMetrics(
-            spy_return_5d=None,
-            sector_positive_count_5d=0,
-            sector_negative_count_5d=0,
-            sector_total=sector_total,
-            sector_dispersion_5d=None,
-            rsp_vs_spy_5d=None,
-            hyg_vs_lqd_5d=None,
-            defensive_spread_5d=None,
-            defensive_outperform_count=0,
-            qqq_vs_spy_5d=None,
-            iwm_vs_spy_5d=None,
-            gld_vs_spy_5d=None,
-            ief_vs_spy_5d=None,
-            tlt_vs_spy_5d=None,
-            vix_return_5d=None,
-        )
-    )
+    no_data_regime = classify_regime(RegimeMetrics(sector_total=sector_total))
     return DashboardResult(
         provider=PROVIDER_NAME,
         data_timestamp=None,
@@ -206,10 +189,6 @@ def _return(returns_table: pd.DataFrame, symbol: str, column: str) -> float | No
         return None
     return _clean(returns_table.loc[symbol, column])
 
-
-# Shared with the trail calculation in metrics_service; kept as a short alias
-# since this module calls it a dozen times.
-_clean = metrics.clean_number
 
 
 def _clean_dict(values: dict[str, float | None]) -> dict[str, float | None]:
