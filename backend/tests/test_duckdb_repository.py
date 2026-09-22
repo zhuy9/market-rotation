@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import pytest
@@ -77,12 +78,15 @@ def test_latest_timestamps_omits_symbols_with_no_cached_data(repository):
 
 
 def test_latest_retrieved_at_reports_when_the_cache_was_last_written(repository):
-    retrieved_at = datetime(2026, 1, 3, 12, 30)
+    # A non-UTC input: the stored moment must not depend on either timezone.
+    retrieved_at = datetime(2026, 1, 3, 7, 30, tzinfo=ZoneInfo("America/New_York"))
     repository.upsert_prices(
         _bars(), interval="1d", provider="yfinance", retrieved_at=retrieved_at
     )
 
-    assert repository.latest_retrieved_at("1d") == retrieved_at
+    latest = repository.latest_retrieved_at("1d")
+    assert latest == retrieved_at
+    assert latest.tzinfo == UTC
     assert repository.latest_retrieved_at("1h") is None
 
 

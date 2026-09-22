@@ -89,7 +89,8 @@ def test_dashboard_endpoint_exposes_freshness_metadata():
 
     assert body["provider"] == "yfinance"
     assert body["data_timestamp"] is not None
-    assert body["retrieved_at"] is not None
+    # A zone-less string would be read as the viewer's local time.
+    assert body["retrieved_at"].endswith("Z")
 
     app.dependency_overrides.clear()
 

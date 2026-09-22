@@ -21,7 +21,7 @@ is on this page.
 - A symbol with zero cached rows produces a `"<SYMBOL> data is
   unavailable."` warning instead of breaking the page.
 - The API exposes `data_timestamp` (the newest bar), `retrieved_at` (when a
-  provider last wrote to the cache) and `provider` so freshness can be judged
+  provider last wrote to the cache, in UTC) and `provider` so freshness can be judged
   independently of the UI. The dashboard shows the bar as a date only —
   daily bars are stamped at midnight, so a clock time would be precision the
   data does not have — and shows `retrieved_at` as a real timestamp.

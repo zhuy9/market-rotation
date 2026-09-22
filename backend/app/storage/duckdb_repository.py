@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
 
@@ -90,7 +90,7 @@ class DuckDBRepository:
         to_insert = df.copy()
         to_insert["interval"] = interval
         to_insert["provider"] = provider
-        to_insert["retrieved_at"] = retrieved_at
+        to_insert["retrieved_at"] = _to_utc_naive(retrieved_at)
         to_insert = to_insert[_STORED_COLUMNS]
 
         with self._write_lock:
@@ -145,7 +145,7 @@ class DuckDBRepository:
             .execute("SELECT max(retrieved_at) FROM market_prices WHERE interval = ?", [interval])
             .fetchone()
         )
-        return row[0] if row and row[0] is not None else None
+        return row[0].replace(tzinfo=UTC) if row and row[0] is not None else None
 
     def upsert_flows(self, df: pd.DataFrame, provider: str, retrieved_at: datetime) -> int:
         """Insert/update daily fund flows. Re-running with the same data does not
@@ -155,7 +155,7 @@ class DuckDBRepository:
 
         to_insert = df.copy()
         to_insert["provider"] = provider
-        to_insert["retrieved_at"] = retrieved_at
+        to_insert["retrieved_at"] = _to_utc_naive(retrieved_at)
         to_insert = to_insert[_FLOW_STORED_COLUMNS]
 
         with self._write_lock:
@@ -182,3 +182,14 @@ class DuckDBRepository:
 
     def close(self) -> None:
         self._conn.close()
+
+
+def _to_utc_naive(moment: datetime) -> datetime:
+    """`retrieved_at` columns are zone-less TIMESTAMPs holding UTC. DuckDB would
+    otherwise store an aware value in the server's local time, and the API would
+    send it on as a zone-less string the browser reads as its own local time.
+    Naive input is taken to be UTC already.
+    """
+    if moment.tzinfo is None:
+        return moment
+    return moment.astimezone(UTC).replace(tzinfo=None)
