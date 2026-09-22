@@ -13,7 +13,7 @@ A personal, open-source dashboard that helps answer:
 - Tracks U.S. sector ETFs, broad equity benchmarks, bonds/credit, gold and
   commodities, the U.S. dollar, volatility, and market-breadth proxies.
 - Calculates 1D/5D/20D returns, relative strength vs SPY, sector breadth and
-  dispersion, RSP/SPY, HYG/LQD, and a defensive/cyclical spread.
+  dispersion, RSP/SPY, HYG/LQD, IVW/IVE, and a defensive/cyclical spread.
 - Classifies the current market regime (`BROAD_RISK_ON`,
   `INTERNAL_ROTATION`, `DEFENSIVE_ROTATION`, `BROAD_RISK_OFF`, `MIXED`) using
   a deterministic, rule-based engine and shows exactly why that regime was

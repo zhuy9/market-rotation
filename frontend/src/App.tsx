@@ -62,6 +62,7 @@ function App() {
           dispersion5d={dashboard.dispersion_5d}
           rsp5d={dashboard.ratios.rsp_spy.return_5d}
           hygLqd5d={dashboard.ratios.hyg_lqd.return_5d}
+          growthValue5d={dashboard.ratios.ivw_ive.return_5d}
           defensiveSpread5d={dashboard.defensive_spread_5d}
         />
         <DashboardFooter />

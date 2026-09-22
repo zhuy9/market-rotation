@@ -24,6 +24,7 @@ function buildDashboard(overrides: Partial<Dashboard> = {}): Dashboard {
     ratios: {
       rsp_spy: { return_1d: 0.001, return_5d: 0.002, return_20d: 0.003 },
       hyg_lqd: { return_1d: -0.001, return_5d: -0.002, return_20d: -0.003 },
+      ivw_ive: { return_1d: 0.004, return_5d: 0.005, return_20d: 0.006 },
     },
     warnings: [],
     ...overrides,

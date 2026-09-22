@@ -57,6 +57,7 @@ def test_dashboard_endpoint_returns_valid_response_shape():
     assert isinstance(body["warnings"], list)
     assert "rsp_spy" in body["ratios"]
     assert "hyg_lqd" in body["ratios"]
+    assert "ivw_ive" in body["ratios"]
 
     app.dependency_overrides.clear()
 
@@ -71,7 +72,7 @@ def test_dashboard_endpoint_maps_breadth_and_ratio_fields_by_name():
     body = client.get("/api/dashboard").json()
 
     assert body["breadth_5d"] == {"positive": 11, "total": 11, "ratio": 1.0}
-    assert set(body["ratios"]) == {"rsp_spy", "hyg_lqd"}
+    assert set(body["ratios"]) == {"rsp_spy", "hyg_lqd", "ivw_ive"}
     assert set(body["ratios"]["rsp_spy"]) == {"return_1d", "return_5d", "return_20d"}
 
     app.dependency_overrides.clear()

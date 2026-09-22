@@ -43,6 +43,7 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
     spy_5d = _return(returns_table, "SPY", "return_5d")
     rsp_spy = metrics.compute_ratio_returns(prices, "RSP", "SPY")
     hyg_lqd = metrics.compute_ratio_returns(prices, "HYG", "LQD")
+    ivw_ive = metrics.compute_ratio_returns(prices, "IVW", "IVE")
     spread = metrics.defensive_cyclical_spread(
         sector_returns_5d, groups["defensive"], groups["cyclical"]
     )
@@ -126,7 +127,11 @@ def build_dashboard(market_service: MarketService, universe: Universe) -> Dashbo
         dispersion_1d=dispersion_1d,
         dispersion_5d=dispersion_5d,
         defensive_spread_5d=spread["spread_5d"],
-        ratios={"rsp_spy": _clean_dict(rsp_spy), "hyg_lqd": _clean_dict(hyg_lqd)},
+        ratios={
+            "rsp_spy": _clean_dict(rsp_spy),
+            "hyg_lqd": _clean_dict(hyg_lqd),
+            "ivw_ive": _clean_dict(ivw_ive),
+        },
         warnings=warnings,
     )
 
@@ -149,7 +154,7 @@ def _empty_dashboard(retrieved_at: datetime | None, sector_total: int) -> Dashbo
         dispersion_1d=None,
         dispersion_5d=None,
         defensive_spread_5d=None,
-        ratios={"rsp_spy": empty_ratio, "hyg_lqd": empty_ratio},
+        ratios={"rsp_spy": empty_ratio, "hyg_lqd": empty_ratio, "ivw_ive": empty_ratio},
         warnings=["No cached market data available. Trigger a refresh."],
     )
 

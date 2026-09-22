@@ -42,11 +42,12 @@ export interface Ratio {
   return_20d: number | null
 }
 
-/** The two ratio proxies the backend always reports: equal-weight breadth
- *  (RSP/SPY) and credit risk (HYG/LQD). */
+/** The ratio proxies the backend always reports: equal-weight breadth
+ *  (RSP/SPY), credit risk (HYG/LQD), and growth vs value style (IVW/IVE). */
 export interface Ratios {
   rsp_spy: Ratio
   hyg_lqd: Ratio
+  ivw_ive: Ratio
 }
 
 export interface Dashboard {

@@ -93,7 +93,7 @@ dispersion = sample_stddev(sector returns), same period
 dispersion = sector performance is more spread out (useful for identifying
 internal rotation vs. a uniform market move).
 
-## RSP/SPY and HYG/LQD ratios
+## RSP/SPY, HYG/LQD, and IVW/IVE ratios
 
 ```text
 RelativeRatio(t) = Price(numerator, t) / Price(denominator, t)
@@ -102,8 +102,8 @@ RelativeRatio(t) = Price(numerator, t) / Price(denominator, t)
 The dashboard reports 1D/5D/20D **returns of that ratio series** (same
 N-session-return formula above, applied to the ratio instead of a raw
 price). RSP outperforming SPY is shown as "broader participation"; HYG
-outperforming LQD is shown as "credit strengthening" — both are
-interpretive labels, not proof.
+outperforming LQD is shown as "credit strengthening"; IVW outperforming
+IVE is shown as "growth leading" — all are interpretive labels, not proof.
 
 ## Defensive / cyclical spread
 

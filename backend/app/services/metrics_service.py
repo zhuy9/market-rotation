@@ -102,7 +102,8 @@ def compute_ratio_returns(
 ) -> dict[str, float | None]:
     """RelativeRatio(t) = Price(numerator,t) / Price(denominator,t); returns of that ratio series.
 
-    Used for RSP/SPY (equal-weight breadth proxy) and HYG/LQD (credit risk proxy).
+    Used for RSP/SPY (equal-weight breadth proxy), HYG/LQD (credit risk proxy),
+    and IVW/IVE (growth vs value style proxy).
     """
     numerator = _closes_by_timestamp(prices, numerator_symbol)
     denominator = _closes_by_timestamp(prices, denominator_symbol)

@@ -16,6 +16,8 @@ equity:
   QQQ: Nasdaq 100
   IWM: Russell 2000
   RSP: S&P 500 Equal Weight
+  IVW: S&P 500 Growth
+  IVE: S&P 500 Value
 
 rates:
   SHY: Short Treasury

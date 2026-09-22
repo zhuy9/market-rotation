@@ -8,6 +8,7 @@ interface MarketInternalsPanelProps {
   dispersion5d: number | null
   rsp5d: number | null
   hygLqd5d: number | null
+  growthValue5d: number | null
   defensiveSpread5d: number | null
 }
 
@@ -16,6 +17,7 @@ export function MarketInternalsPanel({
   dispersion5d,
   rsp5d,
   hygLqd5d,
+  growthValue5d,
   defensiveSpread5d,
 }: MarketInternalsPanelProps) {
   const stats = [
@@ -43,6 +45,12 @@ export function MarketInternalsPanel({
         'High-yield credit (HYG) minus investment-grade credit (LQD), 5-day return. Positive means credit markets are leaning risk-on; negative means credit risk appetite is weakening.',
     },
     {
+      label: 'IVW vs IVE (5D)',
+      value: formatPercent(growthValue5d),
+      description:
+        'S&P 500 Growth (IVW) minus S&P 500 Value (IVE), 5-day return. Positive means growth stocks are leading; negative means leadership is rotating toward value.',
+    },
+    {
       label: 'Defensive Spread (5D)',
       value: formatPercent(defensiveSpread5d),
       description:
@@ -52,7 +60,7 @@ export function MarketInternalsPanel({
 
   return (
     <Panel title="Market Internals">
-      <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((stat) => (
           <div key={stat.label}>
             <dt className="flex items-center text-xs text-neutral-500">

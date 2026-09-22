@@ -66,11 +66,12 @@ class RatioOut(BaseModel):
 
 
 class RatiosOut(BaseModel):
-    """The two ratio proxies the dashboard always reports: equal-weight
-    breadth (PRD section 21) and credit risk (PRD section 22)."""
+    """The ratio proxies the dashboard always reports: equal-weight breadth
+    (PRD section 21), credit risk (PRD section 22), and growth vs value style."""
 
     rsp_spy: RatioOut
     hyg_lqd: RatioOut
+    ivw_ive: RatioOut
 
 
 class SectorFlowOut(BaseModel):
